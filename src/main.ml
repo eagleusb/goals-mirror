@@ -19,11 +19,13 @@
 
 open Printf
 
+open Utils
+
 let usage =
   "\
 goals: Build software.
 
- goals [-f Goalfile] ['var = value' ...] [target ...]
+ goals [-f Goalfile] ['var = value' ...] ['target' ...]
 
 For detailed help see goals(1).
 
@@ -50,6 +52,31 @@ let main () =
   (* Parse the input file. *)
   let file = Parse.parse_from_file filename in
 
-  Ast.print_file stdout file
+  Ast.print_file stdout file;
+
+  (* Find the target(s) to execute first. *)
+  let initial_targets = ref [] in
+  (* XXX Parse command line anon args here. XXX *)
+
+  (* If no initial target set on the command line, find
+   * the first goal in the file.
+   *)
+  List.iter (
+    function
+    | Ast.Goal (name, [], _, _, _) ->
+       if !initial_targets = [] then
+         initial_targets := name :: !initial_targets
+    | Ast.Goal (name, _, _, _, _) ->
+       if !initial_targets = [] then
+         failwithf "%s: first target ‘%s’ has parameters and so cannot be used as the default target"
+           filename name
+    | _ -> ()
+  ) file;
+
+  let initial_targets = List.rev !initial_targets in
+
+  eprintf "initial targets:";
+  List.iter (eprintf " %s") initial_targets;
+  eprintf "\n"
 
 let () = main ()
