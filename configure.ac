@@ -53,6 +53,6 @@ dnl Produce output files.
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Goalfile Makefile
-                 parsing/Goalfile parsing/Makefile])
+                 src/Goalfile src/Makefile])
 
 AC_OUTPUT

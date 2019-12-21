@@ -17,33 +17,39 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-open Lexer
-open Lexing
-
 open Printf
 
-let parse lexbuf =
-  let print_position fp lexbuf =
-    let pos = lexbuf.lex_curr_p in
-    fprintf fp "%s:%d:%d"
-      pos.pos_fname pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
-  in
+let usage =
+  "\
+goals: Build software.
 
-  try Parser.file Lexer.read lexbuf
-  with
-  | SyntaxError msg ->
-     eprintf "%a: %s\n" print_position lexbuf msg;
-     exit 1
-  | Parser.Error ->
-     eprintf "%a: parse error\n" print_position lexbuf;
-     exit 1
+ goals [-f Goalfile] ['var = value' ...] [target ...]
 
-let () =
-  let filename = "Goalfile" in
-  let fp = open_in filename in
-  let lexbuf = Lexing.from_channel fp in
-  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
-  let file : Ast.file = parse lexbuf in
-  close_in fp;
+For detailed help see goals(1).
+
+Options:"
+
+let main () =
+  (* Command line arguments. *)
+  let filename = ref "Goalfile" in
+
+  let argspec = [
+    "-f",        Arg.Set_string filename,
+                 "filename Set name of Goalfile";
+    "--file",    Arg.Set_string filename,
+                 "filename Set name of Goalfile";
+  ] in
+  let argspec = Arg.align argspec in
+  let args = ref [] in
+  let anon_fun s = args := s :: !args in
+  Arg.parse argspec anon_fun usage;
+
+  (*let args = List.rev !args in*)
+  let filename = !filename in
+
+  (* Parse the input file. *)
+  let file = Parse.parse_from_file filename in
 
   Ast.print_file stdout file
+
+let () = main ()

@@ -18,10 +18,10 @@ config.log
 /config.h.in
 /config.status
 /install-sh
-/parsing/goals
-/parsing/lexer.ml
-/parsing/parser.conflicts
-/parsing/parser.ml
-/parsing/parser.mli
-/parsing/stamp-parser
+/src/goals
+/src/lexer.ml
+/src/parser.conflicts
+/src/parser.ml
+/src/parser.mli
+/src/stamp-parser
 /stamp-h
