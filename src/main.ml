@@ -50,7 +50,7 @@ let main () =
   let filename = !filename in
 
   (* Parse the input file. *)
-  let file = Parse.parse_from_file filename in
+  let file = Parse.parse_goalfile filename in
 
   Ast.print_file stdout file;
 
@@ -65,7 +65,7 @@ let main () =
     function
     | Ast.Goal (name, [], _, _, _) ->
        if !initial_targets = [] then
-         initial_targets := name :: !initial_targets
+         initial_targets := Ast.ECall (name, []) :: !initial_targets
     | Ast.Goal (name, _, _, _, _) ->
        if !initial_targets = [] then
          failwithf "%s: first target ‘%s’ has parameters and so cannot be used as the default target"
@@ -74,9 +74,6 @@ let main () =
   ) file;
 
   let initial_targets = List.rev !initial_targets in
-
-  eprintf "initial targets:";
-  List.iter (eprintf " %s") initial_targets;
-  eprintf "\n"
+  ignore initial_targets
 
 let () = main ()

@@ -22,13 +22,12 @@ open Lexing
 
 open Printf
 
-let parse lexbuf =
-  let print_position fp lexbuf =
-    let pos = lexbuf.lex_curr_p in
-    fprintf fp "%s:%d:%d"
-      pos.pos_fname pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
-  in
+let print_position fp lexbuf =
+  let pos = lexbuf.lex_curr_p in
+  fprintf fp "%s:%d:%d"
+    pos.pos_fname pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
 
+let parse_file lexbuf =
   try Parser.file Lexer.read lexbuf
   with
   | SyntaxError msg ->
@@ -38,10 +37,27 @@ let parse lexbuf =
      eprintf "%a: parse error\n" print_position lexbuf;
      exit 1
 
-let parse_from_file filename =
+let parse_expr lexbuf =
+  try Parser.expr Lexer.read lexbuf
+  with
+  | SyntaxError msg ->
+     eprintf "%a: %s\n" print_position lexbuf msg;
+     exit 1
+  | Parser.Error ->
+     eprintf "%a: parse error\n" print_position lexbuf;
+     exit 1
+
+(* This is used to parse the Goalfile. *)
+let parse_goalfile filename =
   let fp = open_in filename in
   let lexbuf = Lexing.from_channel fp in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
-  let file : Ast.file = parse lexbuf in
+  let file : Ast.file = parse_file lexbuf in
   close_in fp;
   file
+
+(* This is used to parse dependency expressions on the command line. *)
+let parse_cli_expr str =
+  let lexbuf = Lexing.from_string str in
+  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "<command line>" };
+  parse_expr lexbuf

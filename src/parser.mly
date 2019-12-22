@@ -36,11 +36,11 @@ open Printf
 %token RIGHT_PAREN
 %token <Ast.substs> STRING
 
-%type <Ast.expr> expr
 %type <Ast.stmt> stmt
 
-(* Start non-terminal. *)
+(* Start nonterminals. *)
 %start <Ast.file> file
+%start <Ast.expr> expr
 %%
 
 file:

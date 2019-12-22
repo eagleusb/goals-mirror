@@ -17,5 +17,5 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-val parse : Lexing.lexbuf -> Ast.file
-val parse_from_file : string -> Ast.file
+val parse_goalfile : string -> Ast.file
+val parse_cli_expr : string -> Ast.expr
