@@ -19,34 +19,34 @@
 
 type file = stmt list
 and stmt =
-  (* let id = expr *)
+  (** let id = expr *)
   | Let of id * expr
-  (* goal id (params) = patterns : exprs = code *)
+  (** goal id (params) = patterns : exprs = code *)
   | Goal of id * id list * pattern list * expr list * code option
 and pattern =
-  (* match tactic such as file ("filename") *)
+  (** match tactic such as file ("filename") *)
   | PTactic of id * substs list
-  (* match named variable, which must be a string or list *)
+  (** match named variable, which must be a string or list *)
   | PVarSubst of id
 and expr =
-  (* goalname (params), tactic (params) etc. *)
+  (** goalname (params), tactic (params) etc. *)
   | ECall of id * expr list
-  (* variable *)
+  (** variable *)
   | EVar of id
-  (* string with %-substitutions *)
+  (** string with %-substitutions *)
   | EString of substs
-  (* list *)
+  (** list *)
   | EList of expr list
 and id = string
 and code = substs
 and substs = subst list
 and subst =
-  (* String literal part. *)
+  (** String literal part. *)
   | SString of string
-  (* %-substitution. *)
+  (** %-substitution. *)
   | SVar of id
 
-(* This is used for incrementally building Ast.substs in the parser. *)
+(** This is used for incrementally building Ast.substs in the parser. *)
 module Substs : sig
   type t
   val create : unit -> t

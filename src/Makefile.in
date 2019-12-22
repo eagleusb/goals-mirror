@@ -22,6 +22,7 @@ OBJECTS = \
 	parser.cmx \
 	lexer.cmx \
 	parse.cmx \
+	eval.cmx \
 	main.cmx
 
 all: goals
@@ -32,17 +33,18 @@ clean:
 	rm -f parser.ml parser.mli lexer.ml parser.conflicts stamp-parser
 	rm -f goals
 
-goals: $(OBJECTS)
-	@OCAMLFIND@ opt $^ -o $@
-
+OCAMLPACKAGES = -package str,unix
 OCAMLFLAGS = -g -safe-string -warn-error CDEFLMPSUVYZX+52-3
 
+goals: $(OBJECTS)
+	@OCAMLFIND@ opt $(OCAMLFLAGS) $(OCAMLPACKAGES) -linkpkg $^ -o $@
+
 %.cmi: %.mli
-	@OCAMLFIND@ c $(OCAMLFLAGS) -c $< -o $@
+	@OCAMLFIND@ c $(OCAMLFLAGS) $(OCAMLPACKAGES) -c $< -o $@
 %.cmo: %.ml
-	@OCAMLFIND@ c $(OCAMLFLAGS) -c $< -o $@
+	@OCAMLFIND@ c $(OCAMLFLAGS) $(OCAMLPACKAGES) -c $< -o $@
 %.cmx: %.ml
-	@OCAMLFIND@ opt $(OCAMLFLAGS) -c $< -o $@
+	@OCAMLFIND@ opt $(OCAMLFLAGS) $(OCAMLPACKAGES) -c $< -o $@
 
 parser.ml parser.mli: stamp-parser
 stamp-parser: parser.mly
