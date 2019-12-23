@@ -37,24 +37,33 @@ Options:"
 
 let main () =
   (* Command line arguments. *)
+  let args = ref [] in
+  let directory = ref "." in
   let filename = ref "Goalfile" in
 
   let argspec = [
-    "-f",        Arg.Set_string filename,
-                 "filename Set name of Goalfile";
-    "--file",    Arg.Set_string filename,
-                 "filename Set name of Goalfile";
+    "-C",          Arg.Set_string directory,
+                   "directory Change to directory before running";
+    "--directory", Arg.Set_string directory,
+                   "directory Change to directory before running";
+    "-f",          Arg.Set_string filename,
+                   "filename Set name of Goalfile";
+    "--file",      Arg.Set_string filename,
+                   "filename Set name of Goalfile";
   ] in
   let argspec = Arg.align argspec in
-  let args = ref [] in
   let anon_fun s = args := s :: !args in
   Arg.parse argspec anon_fun usage;
 
-  (*let args = List.rev !args in*)
+  let args = List.rev !args in
+  let directory = !directory in
   let filename = !filename in
 
   (* Parse the input file. *)
   let env = Parse.parse_goalfile filename in
+
+  (* Now we've read the input, change directory. *)
+  Sys.chdir directory;
 
   (* Parse the command line anon args.  Each parameter has the
    * form "name=<expr>" to assign a value to a variable, or
@@ -75,7 +84,7 @@ let main () =
         let expr = Parse.parse_cli_expr arg in
         targets := expr :: !targets
       )
-  ) !args;
+  ) args;
   let targets = List.rev !targets and env = !env in
 
   (* If no target was set on the command line, use "all ()". *)
