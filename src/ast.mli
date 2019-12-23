@@ -17,26 +17,35 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-type file = stmt list
-and stmt =
-  (** let id = expr *)
-  | Let of id * expr
-  (** goal id (params) = patterns : exprs = code *)
-  | Goal of id * id list * pattern list * expr list * code option
+module StringMap : sig
+  type key = string
+  type 'a t
+  val empty: 'a t
+  val add: key -> 'a -> 'a t -> 'a t
+end
+
+(** An environment is a set of variable and goal definitions, mapping
+    variable or goal name -> expression. *)
+type env = expr StringMap.t
 and pattern =
   (** match tactic such as file ("filename") *)
   | PTactic of id * substs list
   (** match named variable, which must be a string or list *)
   | PVarSubst of id
 and expr =
+  (** goal (params) = patterns : exprs = code *)
+  | EGoal of goal
   (** goalname (params), tactic (params) etc. *)
   | ECall of id * expr list
   (** variable *)
   | EVar of id
-  (** string with %-substitutions *)
-  | EString of substs
   (** list *)
   | EList of expr list
+  (** string with %-substitutions *)
+  | ESubsts of substs
+  (** string with no substitutions *)
+  | EString of string
+and goal = id list * pattern list * expr list * code option
 and id = string
 and code = substs
 and substs = subst list
@@ -56,4 +65,4 @@ module Substs : sig
   val add_var : t -> string -> unit
 end
 
-val print_file : out_channel -> file -> unit
+val print_env : out_channel -> env -> unit

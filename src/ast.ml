@@ -19,18 +19,20 @@
 
 open Printf
 
-type file = stmt list
-and stmt =
-  | Let of id * expr
-  | Goal of id * id list * pattern list * expr list * code option
+module StringMap = Map.Make (String)
+
+type env = expr StringMap.t
 and pattern =
   | PTactic of id * substs list
   | PVarSubst of id
 and expr =
+  | EGoal of goal
   | ECall of id * expr list
   | EVar of id
-  | EString of substs
   | EList of expr list
+  | ESubsts of substs
+  | EString of string
+and goal = id list * pattern list * expr list * code option
 and id = string
 and code = substs
 and substs = subst list
@@ -69,15 +71,12 @@ let iter_with_commas
       f fp x
   ) xs
 
-let rec print_file fp file =
-  List.iter (print_stmt fp) file
+let rec print_env fp env =
+  StringMap.iter (print_def fp) env
 
-and print_stmt fp = function
-  | Let (name, expr) ->
-     fprintf fp "let %s = " name;
-     print_expr fp expr;
-     fprintf fp "\n"
-  | Goal (name, params, patterns, exprs, code) ->
+and print_def fp name expr =
+  match expr with
+  | EGoal (params, patterns, exprs, code) ->
      fprintf fp "goal %s (%s) =\n" name (String.concat ", " params);
      fprintf fp "    ";
      iter_with_commas fp print_pattern patterns;
@@ -91,6 +90,10 @@ and print_stmt fp = function
          fprintf fp "\n    }"
      );
      fprintf fp "\n"
+  | expr ->
+     fprintf fp "let %s = " name;
+     print_expr fp expr;
+     fprintf fp "\n"
 
 and print_pattern fp = function
   | PTactic (name, params) ->
@@ -100,16 +103,18 @@ and print_pattern fp = function
   | PVarSubst id -> print_id fp id
 
 and print_expr fp = function
+  | EGoal _ -> assert false (* printed above *)
   | ECall (name, params) ->
      fprintf fp "%s (" name;
      iter_with_commas fp print_expr params;
      fprintf fp ")"
   | EVar var -> print_id fp var
-  | EString s -> print_substs fp s;
   | EList xs ->
      fprintf fp "[";
      iter_with_commas fp print_expr xs;
      fprintf fp "]"
+  | ESubsts s -> print_substs fp s
+  | EString s -> fprintf fp "%S" s
 
 and print_id = output_string
 

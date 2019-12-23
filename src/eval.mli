@@ -17,6 +17,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-val evaluate : Ast.file -> (string, Ast.expr) Hashtbl.t -> Ast.expr list -> unit
+val evaluate : Ast.env -> Ast.expr list -> unit
 (** This drives evaluation of the list of expressions (in parallel)
     until they are complete or we reach an error. *)

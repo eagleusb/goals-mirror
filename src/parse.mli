@@ -17,5 +17,5 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-val parse_goalfile : string -> Ast.file
+val parse_goalfile : string -> Ast.env
 val parse_cli_expr : string -> Ast.expr

@@ -36,10 +36,8 @@ open Printf
 %token RIGHT_PAREN
 %token <Ast.substs> STRING
 
-%type <Ast.stmt> stmt
-
 (* Start nonterminals. *)
-%start <Ast.file> file
+%start <Ast.env> file
 %start <Ast.expr> expr
 %%
 
@@ -48,7 +46,11 @@ file:
     ;
 
 stmts:
-    | list(stmt) { $1 }
+    | list(stmt)
+    { List.fold_left (
+        fun env (name, expr) -> Ast.StringMap.add name expr env
+      ) Ast.StringMap.empty $1
+    }
     ;
 stmt:
     | option(goal_stmt) patterns COLON barelist option(CODE)
@@ -58,14 +60,14 @@ stmt:
            let pos = $startpos in
            sprintf "_goal@%d" pos.pos_lnum, []
         | Some x -> x in
-      Ast.Goal (name, params, $2, $4, $5)
+      name, Ast.EGoal (params, $2, $4, $5)
     }
     | goal_stmt CODE
     {
       let name, params = $1 in
-      Ast.Goal (name, params, [], [], Some $2)
+      name, Ast.EGoal (params, [], [], Some $2)
     }
-    | LET ID EQUALS expr { Ast.Let ($2, $4) }
+    | LET ID EQUALS expr { $2, $4 }
     ;
 
 goal_stmt:
@@ -94,7 +96,7 @@ pattern_param:
 expr:
     | ID params  { Ast.ECall ($1, $2) }
     | ID         { Ast.EVar $1 (* This might be replaced with ECall later. *) }
-    | STRING     { Ast.EString $1 }
+    | STRING     { Ast.ESubsts $1 }
     | LEFT_ARRAY barelist RIGHT_ARRAY { Ast.EList $2 }
     ;
 barelist:

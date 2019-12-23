@@ -22,7 +22,8 @@ open Printf
 open Utils
 
 (* See also "let id" in [lexer.mll]. *)
-let var_regexp = Str.regexp "\\([a-zA-Z_][a-zA-Z0-9_]*\\)=\\(.*\\)"
+let var_regexp =
+  Str.regexp "\\([a-zA-Z_][a-zA-Z0-9_]*\\)[ \t]*=[ \t]*\\(.*\\)"
 
 let usage =
   "\
@@ -53,58 +54,38 @@ let main () =
   let filename = !filename in
 
   (* Parse the input file. *)
-  let file = Parse.parse_goalfile filename in
+  let env = Parse.parse_goalfile filename in
 
   (* Parse the command line anon args.  Each parameter has the
    * form "name=<expr>" to assign a value to a variable, or
    * "<expr>" to indicate a target to build.
    *)
-  let assignments = ref [] in
   let targets = ref [] in
+  let env = ref env in
   List.iter (
     fun arg ->
-      if Str.string_match var_regexp arg 0 then ( (* assignment *)
+      if Str.string_match var_regexp arg 0 then (
+        (* assignment *)
         let name = Str.matched_group 1 arg in
         let expr = Parse.parse_cli_expr (Str.matched_group 2 arg) in
-        assignments := Ast.Let (name, expr) :: !assignments
+        env := Ast.StringMap.add name expr !env
       )
-      else ( (* target *)
+      else (
+        (* target *)
         let expr = Parse.parse_cli_expr arg in
         targets := expr :: !targets
       )
   ) !args;
+  let targets = List.rev !targets and env = !env in
 
-  (* If no target was set on the command line, find
-   * the first goal in the file.
-   *)
-  if !targets = [] then (
-    try
-      let first_goal =
-        List.find (function Ast.Goal _ -> true | _ -> false) file in
-      match first_goal with
-      | Ast.Goal (name, [], _, _, _) ->
-         targets := [Ast.ECall (name, [])]
-      | Ast.Goal (name, _, _, _, _) ->
-         failwithf "%s: first target ‘%s’ has parameters and so cannot be used as the default target"
-           filename name
-      | _ -> assert false
-    with
-      (* Actually this is fine.  If there are no goals we'll do nothing. *)
-      Not_found -> ()
-  );
+  (* If no target was set on the command line, use "all ()". *)
+  let targets =
+    if targets <> [] then targets
+    else [Ast.ECall ("all", [])] in
 
-  let targets = List.rev !targets in
-
-  (* Assignments are simply treated as statements added to the end of
-   * the file (so they override earlier assignments to the same variable,
-   * if any).
-   *)
-  let file = file @ List.rev !assignments in
-
-  (* We start with an empty symbol table. *)
-  let vars = Hashtbl.create 13 in
+  (*Ast.print_env stdout env;*)
 
   (* Evaluate the target expressions in turn. *)
-  Eval.evaluate file vars targets
+  Eval.evaluate env targets
 
 let () = main ()

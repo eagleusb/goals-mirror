@@ -52,9 +52,9 @@ let parse_goalfile filename =
   let fp = open_in filename in
   let lexbuf = Lexing.from_channel fp in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
-  let file : Ast.file = parse_file lexbuf in
+  let env : Ast.env = parse_file lexbuf in
   close_in fp;
-  file
+  env
 
 (* This is used to parse dependency expressions on the command line. *)
 let parse_cli_expr str =
