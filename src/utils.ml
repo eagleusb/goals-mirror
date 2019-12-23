@@ -20,3 +20,16 @@
 open Printf
 
 let failwithf fs = ksprintf failwith fs
+
+(* From OCaml 4.08 sources.  We can remove this when we can
+ * depend on min OCaml 4.08.
+ *)
+let filter_map f =
+  let rec aux accu = function
+    | [] -> List.rev accu
+    | x :: l ->
+        match f x with
+        | None -> aux accu l
+        | Some v -> aux (v :: accu) l
+  in
+  aux []

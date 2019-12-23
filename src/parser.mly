@@ -84,7 +84,7 @@ patterns:
 pattern:
     | STRING     { Ast.PTactic ("file", [$1]) }
     | ID pattern_params { Ast.PTactic ($1, $2) }
-    | ID         { Ast.PVarSubst $1 }
+    | ID         { Ast.PVar $1 }
     ;
 pattern_params:
     | LEFT_PAREN separated_list(COMMA, pattern_param) RIGHT_PAREN { $2 }

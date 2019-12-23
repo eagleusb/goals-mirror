@@ -22,6 +22,10 @@ module StringMap : sig
   type 'a t
   val empty: 'a t
   val add: key -> 'a -> 'a t -> 'a t
+  val find: key -> 'a t -> 'a
+  val fold: (key -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
+  val filter: (key -> 'a -> bool) -> 'a t -> 'a t
+  val bindings: 'a t -> (key * 'a) list
 end
 
 (** An environment is a set of variable and goal definitions, mapping
@@ -31,7 +35,7 @@ and pattern =
   (** match tactic such as file ("filename") *)
   | PTactic of id * substs list
   (** match named variable, which must be a string or list *)
-  | PVarSubst of id
+  | PVar of id
 and expr =
   (** goal (params) = patterns : exprs = code *)
   | EGoal of goal
@@ -43,8 +47,10 @@ and expr =
   | EList of expr list
   (** string with %-substitutions *)
   | ESubsts of substs
-  (** string with no substitutions *)
-  | EString of string
+  (** constant expression, such as a plain string, int, boolean, etc. *)
+  | EConstant of constant
+and constant =
+  | CString of string
 and goal = id list * pattern list * expr list * code option
 and id = string
 and code = substs

@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-val evaluate : Ast.env -> Ast.expr list -> unit
+val evaluate_targets : Ast.env -> Ast.expr list -> unit
 (** This drives evaluation of the list of expressions (in parallel)
-    until they are complete or we reach an error. *)
+    until they are complete or we reach an error.  The expressions
+    are either a list of dependencies or a list of initial targets. *)

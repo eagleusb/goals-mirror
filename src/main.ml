@@ -92,9 +92,9 @@ let main () =
     if targets <> [] then targets
     else [Ast.ECall ("all", [])] in
 
-  (*Ast.print_env stdout env;*)
+  Ast.print_env stdout env;
 
   (* Evaluate the target expressions in turn. *)
-  Eval.evaluate env targets
+  Eval.evaluate_targets env targets
 
 let () = main ()

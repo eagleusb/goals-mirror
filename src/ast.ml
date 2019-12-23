@@ -24,14 +24,16 @@ module StringMap = Map.Make (String)
 type env = expr StringMap.t
 and pattern =
   | PTactic of id * substs list
-  | PVarSubst of id
+  | PVar of id
 and expr =
   | EGoal of goal
   | ECall of id * expr list
   | EVar of id
   | EList of expr list
   | ESubsts of substs
-  | EString of string
+  | EConstant of constant
+and constant =
+  | CString of string
 and goal = id list * pattern list * expr list * code option
 and id = string
 and code = substs
@@ -100,7 +102,7 @@ and print_pattern fp = function
      fprintf fp "%s (" name;
      iter_with_commas fp print_substs params;
      fprintf fp ")"
-  | PVarSubst id -> print_id fp id
+  | PVar id -> print_id fp id
 
 and print_expr fp = function
   | EGoal _ -> assert false (* printed above *)
@@ -114,7 +116,10 @@ and print_expr fp = function
      iter_with_commas fp print_expr xs;
      fprintf fp "]"
   | ESubsts s -> print_substs fp s
-  | EString s -> fprintf fp "%S" s
+  | EConstant c -> print_constant fp c
+
+and print_constant fp = function
+  | CString s -> fprintf fp "%S" s
 
 and print_id = output_string
 
