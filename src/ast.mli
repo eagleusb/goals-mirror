@@ -28,27 +28,33 @@ module StringMap : sig
   val bindings: 'a t -> (key * 'a) list
 end
 
+(** Location where we parsed from $loc = $startpos, $endpos *)
+type loc = Lexing.position * Lexing.position
+val noloc : loc
+val print_loc : out_channel -> loc -> unit
+val string_loc : unit -> loc -> string
+
 (** An environment is a set of variable and goal definitions, mapping
     variable or goal name -> expression. *)
 type env = expr StringMap.t
 and pattern =
   (** match tactic such as file ("filename") *)
-  | PTactic of id * substs list
+  | PTactic of loc * id * substs list
   (** match named variable, which must be a string or list *)
-  | PVar of id
+  | PVar of loc * id
 and expr =
   (** goal (params) = patterns : exprs = code *)
-  | EGoal of goal
+  | EGoal of loc * goal
   (** goalname (params), tactic (params) etc. *)
-  | ECall of id * expr list
+  | ECall of loc * id * expr list
   (** variable *)
-  | EVar of id
+  | EVar of loc * id
   (** list *)
-  | EList of expr list
+  | EList of loc * expr list
   (** string with %-substitutions *)
-  | ESubsts of substs
+  | ESubsts of loc * substs
   (** constant expression, such as a plain string, int, boolean, etc. *)
-  | EConstant of constant
+  | EConstant of loc * constant
 and constant =
   | CString of string
 and goal = id list * pattern list * expr list * code option

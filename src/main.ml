@@ -90,7 +90,7 @@ let main () =
   (* If no target was set on the command line, use "all ()". *)
   let targets =
     if targets <> [] then targets
-    else [Ast.ECall ("all", [])] in
+    else [Ast.ECall (Ast.noloc, "all", [])] in
 
   Ast.print_env stdout env;
 

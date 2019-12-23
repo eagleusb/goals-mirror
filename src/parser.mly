@@ -57,15 +57,14 @@ stmt:
     { let name, params =
         match $1 with
         | None ->
-           let pos = $startpos in
-           sprintf "_goal@%d" pos.pos_lnum, []
+           sprintf "_goal@%d" $startpos.pos_lnum, []
         | Some x -> x in
-      name, Ast.EGoal (params, $2, $4, $5)
+      name, Ast.EGoal ($loc, (params, $2, $4, $5))
     }
     | goal_stmt CODE
     {
       let name, params = $1 in
-      name, Ast.EGoal (params, [], [], Some $2)
+      name, Ast.EGoal ($loc, (params, [], [], Some $2))
     }
     | LET ID EQUALS expr { $2, $4 }
     ;
@@ -82,9 +81,9 @@ patterns:
     | separated_list(COMMA, pattern) { $1 }
     ;
 pattern:
-    | STRING     { Ast.PTactic ("file", [$1]) }
-    | ID pattern_params { Ast.PTactic ($1, $2) }
-    | ID         { Ast.PVar $1 }
+    | STRING     { Ast.PTactic ($loc, "file", [$1]) }
+    | ID pattern_params { Ast.PTactic ($loc, $1, $2) }
+    | ID         { Ast.PVar ($loc, $1) }
     ;
 pattern_params:
     | LEFT_PAREN separated_list(COMMA, pattern_param) RIGHT_PAREN { $2 }
@@ -94,10 +93,10 @@ pattern_param:
     ;
 
 expr:
-    | ID params  { Ast.ECall ($1, $2) }
-    | ID         { Ast.EVar $1 (* This might be replaced with ECall later. *) }
-    | STRING     { Ast.ESubsts $1 }
-    | LEFT_ARRAY barelist RIGHT_ARRAY { Ast.EList $2 }
+    | ID params  { Ast.ECall ($loc, $1, $2) }
+    | ID         { Ast.EVar ($loc, $1) }
+    | STRING     { Ast.ESubsts ($loc, $1) }
+    | LEFT_ARRAY barelist RIGHT_ARRAY { Ast.EList ($loc, $2) }
     ;
 barelist:
     | separated_list(COMMA, expr) { $1 }

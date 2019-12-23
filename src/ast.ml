@@ -17,21 +17,31 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
+open Lexing
 open Printf
 
 module StringMap = Map.Make (String)
 
+type loc = position * position
+let noloc = dummy_pos, dummy_pos
+
+let string_loc () loc =
+  let pos = fst loc in
+  sprintf "%s:%d:%d" pos.pos_fname pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
+let print_loc fp loc =
+  fprintf fp "%s" (string_loc () loc)
+
 type env = expr StringMap.t
 and pattern =
-  | PTactic of id * substs list
-  | PVar of id
+  | PTactic of loc * id * substs list
+  | PVar of loc * id
 and expr =
-  | EGoal of goal
-  | ECall of id * expr list
-  | EVar of id
-  | EList of expr list
-  | ESubsts of substs
-  | EConstant of constant
+  | EGoal of loc * goal
+  | ECall of loc * id * expr list
+  | EVar of loc * id
+  | EList of loc * expr list
+  | ESubsts of loc * substs
+  | EConstant of loc * constant
 and constant =
   | CString of string
 and goal = id list * pattern list * expr list * code option
@@ -78,7 +88,7 @@ let rec print_env fp env =
 
 and print_def fp name expr =
   match expr with
-  | EGoal (params, patterns, exprs, code) ->
+  | EGoal (loc, (params, patterns, exprs, code)) ->
      fprintf fp "goal %s (%s) =\n" name (String.concat ", " params);
      fprintf fp "    ";
      iter_with_commas fp print_pattern patterns;
@@ -98,25 +108,25 @@ and print_def fp name expr =
      fprintf fp "\n"
 
 and print_pattern fp = function
-  | PTactic (name, params) ->
+  | PTactic (loc, name, params) ->
      fprintf fp "%s (" name;
      iter_with_commas fp print_substs params;
      fprintf fp ")"
-  | PVar id -> print_id fp id
+  | PVar (loc, id) -> print_id fp id
 
 and print_expr fp = function
   | EGoal _ -> assert false (* printed above *)
-  | ECall (name, params) ->
+  | ECall (loc, name, params) ->
      fprintf fp "%s (" name;
      iter_with_commas fp print_expr params;
      fprintf fp ")"
-  | EVar var -> print_id fp var
-  | EList xs ->
+  | EVar (loc, var) -> print_id fp var
+  | EList (loc, xs) ->
      fprintf fp "[";
      iter_with_commas fp print_expr xs;
      fprintf fp "]"
-  | ESubsts s -> print_substs fp s
-  | EConstant c -> print_constant fp c
+  | ESubsts (loc, s) -> print_substs fp s
+  | EConstant (loc, c) -> print_constant fp c
 
 and print_constant fp = function
   | CString s -> fprintf fp "%S" s
