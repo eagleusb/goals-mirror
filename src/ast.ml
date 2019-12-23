@@ -108,12 +108,13 @@ and print_def fp name expr =
      print_expr fp expr;
      fprintf fp "\n"
 
-and print_pattern fp = function
+and string_pattern () = function
   | PTactic (loc, name, params) ->
-     fprintf fp "*%s (" name;
-     iter_with_commas fp print_substs params;
-     fprintf fp ")"
-  | PVar (loc, id) -> print_id fp id
+     sprintf "*%s (%s)" name (String.concat ", "
+                                (List.map (string_substs ()) params));
+  | PVar (loc, id) -> id
+
+and print_pattern fp p = output_string fp (string_pattern () p)
 
 and print_expr fp = function
   | EGoal _ -> assert false (* printed above *)
@@ -138,14 +139,16 @@ and print_constant fp = function
 
 and print_id = output_string
 
-and print_substs fp xs =
-  let xs =
+and string_substs () ss =
+  let ss =
     List.map (
       function
       | SString s -> sprintf "%S" s
       | SVar id -> id
-    ) xs in
-  fprintf fp "%s" (String.concat "+" xs)
+    ) ss in
+  (String.concat "+" ss)
+
+and print_substs fp ss = output_string fp (string_substs () ss)
 
 and print_code fp xs =
   List.iter (

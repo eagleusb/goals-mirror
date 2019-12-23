@@ -80,3 +80,5 @@ module Substs : sig
 end
 
 val print_env : out_channel -> env -> unit
+
+val string_pattern : unit -> pattern -> string
