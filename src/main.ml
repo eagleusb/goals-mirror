@@ -97,4 +97,7 @@ let main () =
   (* Evaluate the target expressions in turn. *)
   Eval.evaluate_targets env targets
 
-let () = main ()
+let () =
+  try main ()
+  with
+    Failure msg -> prerr_endline msg; exit 1
