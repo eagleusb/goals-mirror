@@ -52,6 +52,9 @@ rule read =
     | "{"     { read_code (Ast.Substs.create ()) (ref 1) lexbuf }
     | "goal"  { GOAL }
     | "let"   { LET }
+    | "*" id  { let id = Lexing.lexeme lexbuf in
+                let len = String.length id in
+                TACTIC (String.sub id 1 (len-1)) }
     | id      { ID (Lexing.lexeme lexbuf) }
     | _       { raise (SyntaxError ("unexpected character: " ^
                                     Lexing.lexeme lexbuf)) }

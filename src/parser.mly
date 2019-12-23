@@ -25,16 +25,17 @@ open Printf
 %token <Ast.substs> CODE
 %token COLON
 %token COMMA
-%token <string> ID
 %token EQUALS
 %token EOF
 %token GOAL
+%token <string> ID
 %token LEFT_ARRAY
 %token LEFT_PAREN
 %token LET
 %token RIGHT_ARRAY
 %token RIGHT_PAREN
 %token <Ast.substs> STRING
+%token <string> TACTIC
 
 (* Start nonterminals. *)
 %start <Ast.env> file
@@ -95,6 +96,7 @@ pattern_param:
 expr:
     | ID params  { Ast.ECall ($loc, $1, $2) }
     | ID         { Ast.EVar ($loc, $1) }
+    | TACTIC params { Ast.ETactic ($loc, $1, $2) }
     | STRING     { Ast.ESubsts ($loc, $1) }
     | LEFT_ARRAY barelist RIGHT_ARRAY { Ast.EList ($loc, $2) }
     ;

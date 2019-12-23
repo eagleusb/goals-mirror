@@ -25,21 +25,7 @@ let rec evaluate_targets env exprs =
 and evaluate_target env = function
   | Ast.EGoal _ -> assert false
 
-  (* This could be an instruction to call a goal, or it
-   * could be a tactic.
-   *)
-  | Ast.ECall (loc, "file", [filename]) (* XXX define tactics! *) ->
-     (* All parameters of tactics must be simple expressions (strings,
-      * in future booleans, numbers, etc).
-      *)
-     let args = [filename] in
-     let args = List.map (simplify env) args in
-     run_goal_for_tactic loc env "file" args
-
-  | Ast.ECall (loc, "file", _) ->
-     failwithf "%a: file tactic called with wrong number of parameters"
-       Ast.string_loc loc
-
+  (* Call a goal. *)
   | Ast.ECall (loc, name, args) ->
      let expr =
        try Ast.StringMap.find name env
@@ -53,6 +39,13 @@ and evaluate_target env = function
             Ast.string_loc loc name in
      run_goal loc env name args goal
 
+  | Ast.ETactic (loc, name, args) ->
+     (* All parameters of tactics must be simple expressions (strings,
+      * in future booleans, numbers, etc).
+      *)
+     let args = List.map (simplify env) args in
+     run_goal_for_tactic loc env name args
+
   (* Look up the variable and substitute it. *)
   | Ast.EVar (loc, name) ->
      let expr =
@@ -65,7 +58,7 @@ and evaluate_target env = function
   | Ast.EList (loc, exprs) ->
      evaluate_targets env exprs
 
-  (* A string (with or without substitutions) implies file (filename). *)
+  (* A string (with or without substitutions) implies *file(filename). *)
   | Ast.ESubsts (loc, str) ->
      let str = substitute loc env str in
      run_goal_for_tactic loc env "file" [Ast.CString str]
@@ -181,7 +174,11 @@ and simplify env = function
        Ast.string_loc loc
 
   | Ast.ECall (loc, name, _) ->
-     failwithf "%a: cannot use goal or tactic ‘%s’ in constant expression"
+     failwithf "%a: cannot use goal ‘%s’ in constant expression"
+       Ast.string_loc loc name
+
+  | Ast.ETactic (loc, name, _) ->
+     failwithf "%a: cannot use tactic ‘*%s’ in constant expression"
        Ast.string_loc loc name
 
   | Ast.EGoal (loc, _) ->

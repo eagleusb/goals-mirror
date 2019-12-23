@@ -38,6 +38,7 @@ and pattern =
 and expr =
   | EGoal of loc * goal
   | ECall of loc * id * expr list
+  | ETactic of loc * id * expr list
   | EVar of loc * id
   | EList of loc * expr list
   | ESubsts of loc * substs
@@ -109,7 +110,7 @@ and print_def fp name expr =
 
 and print_pattern fp = function
   | PTactic (loc, name, params) ->
-     fprintf fp "%s (" name;
+     fprintf fp "*%s (" name;
      iter_with_commas fp print_substs params;
      fprintf fp ")"
   | PVar (loc, id) -> print_id fp id
@@ -118,6 +119,10 @@ and print_expr fp = function
   | EGoal _ -> assert false (* printed above *)
   | ECall (loc, name, params) ->
      fprintf fp "%s (" name;
+     iter_with_commas fp print_expr params;
+     fprintf fp ")"
+  | ETactic (loc, name, params) ->
+     fprintf fp "*%s (" name;
      iter_with_commas fp print_expr params;
      fprintf fp ")"
   | EVar (loc, var) -> print_id fp var

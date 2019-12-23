@@ -45,9 +45,11 @@ and pattern =
 and expr =
   (** goal (params) = patterns : exprs = code *)
   | EGoal of loc * goal
-  (** goalname (params), tactic (params) etc. *)
+  (** goalname (params) etc. *)
   | ECall of loc * id * expr list
-  (** variable *)
+  (** *tactic (params) etc. *)
+  | ETactic of loc * id * expr list
+  (** variable, or goal call with no parameters *)
   | EVar of loc * id
   (** list *)
   | EList of loc * expr list
