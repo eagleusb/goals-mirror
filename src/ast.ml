@@ -20,6 +20,8 @@
 open Lexing
 open Printf
 
+open Utils
+
 module Env = Map.Make (String)
 
 type loc = position * position
@@ -52,6 +54,62 @@ and substs = subst list
 and subst =
   | SString of string
   | SVar of id
+
+let getvar env loc name =
+  try Env.find name env
+  with Not_found ->
+    failwithf "%a: variable ‘%s’ not found" string_loc loc name
+
+let getgoal env loc name =
+  let expr =
+    try Env.find name env
+    with Not_found ->
+      failwithf "%a: goal ‘%s’ not found" string_loc loc name in
+  let goal =
+    match expr with
+    | EGoal (loc, goal) -> goal
+    | _ ->
+       failwithf "%a: tried to call ‘%s’ which is not a goal"
+         string_loc loc name in
+  goal
+
+let rec to_constant env = function
+  | EConstant (loc, c) -> c
+
+  | EVar (loc, name) ->
+     let expr = getvar env loc name in
+     to_constant env expr
+
+  | ESubsts (loc, str) ->
+     CString (substitute env loc str)
+
+  | EList (loc, _) ->
+     failwithf "%a: list found where constant expression expected"
+       string_loc loc
+
+  | ECall (loc, name, _) ->
+     failwithf "%a: cannot use goal ‘%s’ in constant expression"
+       string_loc loc name
+
+  | ETactic (loc, name, _) ->
+     failwithf "%a: cannot use tactic ‘*%s’ in constant expression"
+       string_loc loc name
+
+  | EGoal (loc, _) ->
+     failwithf "%a: cannot use goal in constant expression"
+       string_loc loc
+
+and substitute env loc substs =
+  let b = Buffer.create 13 in
+  List.iter (
+    function
+    | SString s -> Buffer.add_string b s
+    | SVar name ->
+       let expr = getvar env loc name in
+       match to_constant env expr with
+       | CString s -> Buffer.add_string b s
+  ) substs;
+  Buffer.contents b
 
 module Substs = struct
   type t = {
@@ -116,26 +174,31 @@ and string_pattern () = function
 
 and print_pattern fp p = output_string fp (string_pattern () p)
 
-and print_expr fp = function
-  | EGoal _ -> assert false (* printed above *)
+and string_expr () = function
+  | EGoal (loc, (params, patterns, exprs, code)) ->
+     sprintf "goal (%s) = %s : %s%s"
+       (String.concat ", " params)
+       (String.concat ", " (List.map (string_pattern ()) patterns))
+       (String.concat ", " (List.map (string_expr ()) exprs))
+       (match code with None -> "" | Some code -> " = { ... }")
   | ECall (loc, name, params) ->
-     fprintf fp "%s (" name;
-     iter_with_commas fp print_expr params;
-     fprintf fp ")"
+     sprintf "%s (%s)"
+       name (String.concat ", " (List.map (string_expr ()) params))
   | ETactic (loc, name, params) ->
-     fprintf fp "*%s (" name;
-     iter_with_commas fp print_expr params;
-     fprintf fp ")"
-  | EVar (loc, var) -> print_id fp var
+     sprintf "*%s (%s)"
+       name (String.concat ", " (List.map (string_expr ()) params))
+  | EVar (loc, var) -> var
   | EList (loc, xs) ->
-     fprintf fp "[";
-     iter_with_commas fp print_expr xs;
-     fprintf fp "]"
-  | ESubsts (loc, s) -> print_substs fp s
-  | EConstant (loc, c) -> print_constant fp c
+     sprintf "[%s]" (String.concat ", " (List.map (string_expr ()) xs))
+  | ESubsts (loc, s) -> string_substs () s
+  | EConstant (loc, c) -> string_constant () c
 
-and print_constant fp = function
-  | CString s -> fprintf fp "%S" s
+and print_expr fp expr = output_string fp (string_expr () expr)
+
+and string_constant () = function
+  | CString s -> sprintf "%S" s
+
+and print_constant fp c = output_string fp (string_constant () c)
 
 and print_id = output_string
 

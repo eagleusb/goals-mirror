@@ -27,31 +27,19 @@ and evaluate_target env = function
 
   (* Call a goal. *)
   | Ast.ECall (loc, name, args) ->
-     let expr =
-       try Ast.Env.find name env
-       with Not_found ->
-         failwithf "%a: goal ‘%s’ not found" Ast.string_loc loc name in
-     let goal =
-       match expr with
-       | Ast.EGoal (loc, goal) -> goal
-       | _ ->
-          failwithf "%a: tried to call ‘%s’ which is not a goal"
-            Ast.string_loc loc name in
-     run_goal loc env name args goal
+     let goal = Ast.getgoal env loc name in
+     run_goal env loc name args goal
 
   | Ast.ETactic (loc, name, args) ->
      (* All parameters of tactics must be simple expressions (strings,
       * in future booleans, numbers, etc).
       *)
-     let args = List.map (simplify env) args in
-     run_goal_for_tactic loc env name args
+     let args = List.map (Ast.to_constant env) args in
+     run_tactic env loc name args
 
   (* Look up the variable and substitute it. *)
   | Ast.EVar (loc, name) ->
-     let expr =
-       try Ast.Env.find name env
-       with Not_found ->
-         failwithf "%a: variable ‘%s’ not found" Ast.string_loc loc name in
+     let expr = Ast.getvar env loc name in
      evaluate_target env expr
 
   (* Lists are inlined when found as a target. *)
@@ -60,16 +48,62 @@ and evaluate_target env = function
 
   (* A string (with or without substitutions) implies *file(filename). *)
   | Ast.ESubsts (loc, str) ->
-     let str = substitute loc env str in
-     run_goal_for_tactic loc env "file" [Ast.CString str]
+     let str = Ast.substitute env loc str in
+     run_tactic env loc "file" [Ast.CString str]
 
   | Ast.EConstant (loc, c) ->
-     run_goal_for_tactic loc env "file" [c]
+     run_tactic env loc "file" [c]
+
+(* Run a goal by name. *)
+and run_goal env loc name args (params, patterns, deps, code) =
+  (* Create a new environment which maps the parameter names to
+   * the args.
+   *)
+  let env =
+    let params =
+      try List.combine params args
+      with Invalid_argument _ ->
+        failwithf "%a: calling goal ‘%s’ with wrong number of arguments"
+          Ast.string_loc loc name in
+    List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
+
+  (* Check all dependencies have been updated. *)
+  evaluate_targets env deps;
+
+  (* Check if any target (ie. pattern) needs to be rebuilt. *)
+  let rebuild =
+    List.exists (needs_rebuild env loc name deps) patterns in
+
+  if rebuild then (
+    (* Run the code (if any). *)
+    (match code with
+     | None -> ()
+     | Some code ->
+        let code = Ast.substitute env loc code in
+        Printf.printf "running : %s\n" code
+    );
+
+    (* Check all targets were updated (else it's an error). *)
+    let pattern_still_needs_rebuild =
+      try Some (List.find (needs_rebuild env loc name deps) patterns)
+      with Not_found -> None in
+    match pattern_still_needs_rebuild with
+    | None -> ()
+    | Some pattern ->
+       failwithf "%a: goal ‘%s’ ran successfully but it did not rebuild %a"
+         Ast.string_loc loc
+         name
+         Ast.string_pattern pattern
+  )
+
+(* Return whether the target (pattern) needs to be rebuilt. *)
+and needs_rebuild env loc name deps pattern =
+  false (* XXX *)
 
 (* Find the goal which matches the given tactic and run it.
- * Params is a list of constants.
+ * const_args is a list of parameters (all constants).
  *)
-and run_goal_for_tactic loc env tactic const_args =
+and run_tactic env loc tactic const_args =
   (* Search across all goals for a matching tactic. *)
   let goals =
     let env = Ast.Env.bindings env in
@@ -83,21 +117,22 @@ and run_goal_for_tactic loc env tactic const_args =
     try
       List.find
         (fun (_, (_, patterns, _, _)) ->
-          List.exists (matching_pattern loc env tactic const_args) patterns)
+          List.exists (matching_pattern env loc tactic const_args) patterns)
         goals
     with
       Not_found ->
-        failwithf "%a: don't know how to build %s %s"
-          Ast.string_loc loc
-          tactic
-          (String.concat ", "
-             (List.map (function Ast.CString s -> s) const_args)) in
+        let tactic =
+          Ast.ETactic (loc, tactic,
+                       List.map (fun c -> Ast.EConstant (loc, c))
+                         const_args) in
+        failwithf "%a: don't know how to build %a"
+          Ast.string_loc loc Ast.string_expr tactic in
 
   let args = [] (* XXX calculate free variables *) in
-  run_goal loc env name args goal
+  run_goal env loc name args goal
 
 (* XXX This only does exact matches at the moment. *)
-and matching_pattern loc env tactic const_args = function
+and matching_pattern env loc tactic const_args = function
   | Ast.PTactic (loc, constructor, params)
        when tactic = constructor &&
             List.length const_args = List.length params ->
@@ -105,7 +140,7 @@ and matching_pattern loc env tactic const_args = function
       * to constants, but don't fail here if we can't do this.
       *)
      (try
-        let params = List.map (substitute loc env) params in
+        let params = List.map (Ast.substitute env loc) params in
         let params = List.map (fun s -> Ast.CString s) params in
         const_args = params
       with Failure _ -> false
@@ -113,93 +148,5 @@ and matching_pattern loc env tactic const_args = function
 
   | Ast.PTactic _ -> false
 
-  | Ast.PVar (loc, name) -> assert false
-(*
-  NOT IMPLEMENTED - we need variables to contain constructors!
-     (try
-        let expr = Ast.StringMap.find name env in
-        let expr = simplify env expr in
-      with Not_found -> false
-     )
-*)
+  | Ast.PVar (loc, name) -> assert false (* not implemented *)
 
-(* Run a named goal. *)
-and run_goal loc env name args (params, patterns, deps, code) =
-  (* Substitute the args for the parameters in the environment. *)
-  let params =
-    try List.combine params args
-    with Invalid_argument _ ->
-      failwithf "%a: calling goal ‘%s’ with wrong number of arguments"
-        Ast.string_loc loc name in
-  let env =
-    List.fold_left (fun env (k, v) -> Ast.Env.add k v env)
-      env params in
-
-  (* Evaluate the dependencies first. *)
-  evaluate_targets env deps;
-
-  (* Check if any target needs to be updated. *)
-  (* XXX *)
-
-  (* Run the code (if any). *)
-  (match code with
-   | None -> ()
-   | Some code ->
-      let code = substitute loc env code in
-      Printf.printf "running : %s\n" code
-  );
-
-  (* Check all targets were updated (else it's an error). *)
-  (* XXX *)
-
-(* Take any expression and simplify it down to a constant.
- * If the expression cannot be simplified then this throws
- * an error.
- *)
-and simplify env = function
-  | Ast.EConstant (loc, c) -> c
-
-  | Ast.EVar (loc, name) ->
-     let expr =
-       try Ast.Env.find name env
-       with Not_found ->
-         failwithf "%a: variable ‘%s’ not found" Ast.string_loc loc name in
-     simplify env expr
-
-  | Ast.ESubsts (loc, str) ->
-     Ast.CString (substitute loc env str)
-
-  | Ast.EList (loc, _) ->
-     failwithf "%a: list found where constant expression expected"
-       Ast.string_loc loc
-
-  | Ast.ECall (loc, name, _) ->
-     failwithf "%a: cannot use goal ‘%s’ in constant expression"
-       Ast.string_loc loc name
-
-  | Ast.ETactic (loc, name, _) ->
-     failwithf "%a: cannot use tactic ‘*%s’ in constant expression"
-       Ast.string_loc loc name
-
-  | Ast.EGoal (loc, _) ->
-     failwithf "%a: cannot use goal in constant expression"
-       Ast.string_loc loc
-
-(* Take a substitution list and try to turn it into a simple
- * string by evaluating every variable.  If not possible this
- * throws an error.  Returns a string.
- *)
-and substitute loc env substs =
-  let b = Buffer.create 13 in
-  List.iter (
-    function
-    | Ast.SString s -> Buffer.add_string b s
-    | Ast.SVar name ->
-       let expr =
-         try Ast.Env.find name env
-         with Not_found ->
-           failwithf "%a: variable ‘%s’ not found" Ast.string_loc loc name in
-       match simplify env expr with
-       | Ast.CString s -> Buffer.add_string b s
-  ) substs;
-  Buffer.contents b

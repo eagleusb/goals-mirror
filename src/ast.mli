@@ -40,7 +40,8 @@ type env = expr Env.t
 and pattern =
   (** match tactic such as *file ("filename") *)
   | PTactic of loc * id * substs list
-  (** match named variable, which must be a string or list *)
+  (** match named variable, which must be a string, ETactic or
+      a list of those *)
   | PVar of loc * id
 and expr =
   (** goal (params) = patterns : exprs = code *)
@@ -69,6 +70,24 @@ and subst =
   (** %-substitution. *)
   | SVar of id
 
+(** Look up a variable in the environment.  Raise [Failure _]
+    if not found. *)
+val getvar : env -> loc -> id -> expr
+
+(** Look up a goal in the environment.  Raise [Failure _] if not
+    found or if the named variable is not a goal. *)
+val getgoal : env -> loc -> id -> goal
+
+(** Take any expression and simplify it down to a constant.
+    If the expression cannot be simplified then this raises
+    [Failure _]. *)
+val to_constant : env -> expr -> constant
+
+(** Take a substitution list and try to turn it into a simple
+    string by evaluating every variable.  If not possible this
+    raises [Failure _]. *)
+val substitute : env -> loc -> substs -> string
+
 (** This is used for incrementally building Ast.substs in the parser. *)
 module Substs : sig
   type t
@@ -79,6 +98,9 @@ module Substs : sig
   val add_var : t -> string -> unit
 end
 
+(** Print all definitions in an environment. *)
 val print_env : out_channel -> env -> unit
 
+(** %a formatters. *)
 val string_pattern : unit -> pattern -> string
+val string_expr : unit -> expr -> string
