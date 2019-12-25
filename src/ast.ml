@@ -20,7 +20,7 @@
 open Lexing
 open Printf
 
-module StringMap = Map.Make (String)
+module Env = Map.Make (String)
 
 type loc = position * position
 let noloc = dummy_pos, dummy_pos
@@ -31,7 +31,7 @@ let string_loc () loc =
 let print_loc fp loc =
   fprintf fp "%s" (string_loc () loc)
 
-type env = expr StringMap.t
+type env = expr Env.t
 and pattern =
   | PTactic of loc * id * substs list
   | PVar of loc * id
@@ -85,7 +85,7 @@ let iter_with_commas
   ) xs
 
 let rec print_env fp env =
-  StringMap.iter (print_def fp) env
+  Env.iter (print_def fp) env
 
 and print_def fp name expr =
   match expr with

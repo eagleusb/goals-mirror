@@ -28,7 +28,7 @@ and evaluate_target env = function
   (* Call a goal. *)
   | Ast.ECall (loc, name, args) ->
      let expr =
-       try Ast.StringMap.find name env
+       try Ast.Env.find name env
        with Not_found ->
          failwithf "%a: goal ‘%s’ not found" Ast.string_loc loc name in
      let goal =
@@ -49,7 +49,7 @@ and evaluate_target env = function
   (* Look up the variable and substitute it. *)
   | Ast.EVar (loc, name) ->
      let expr =
-       try Ast.StringMap.find name env
+       try Ast.Env.find name env
        with Not_found ->
          failwithf "%a: variable ‘%s’ not found" Ast.string_loc loc name in
      evaluate_target env expr
@@ -72,7 +72,7 @@ and evaluate_target env = function
 and run_goal_for_tactic loc env tactic const_args =
   (* Search across all goals for a matching tactic. *)
   let goals =
-    let env = Ast.StringMap.bindings env in
+    let env = Ast.Env.bindings env in
     filter_map
       (function (name, Ast.EGoal (loc, goal)) -> Some (name, goal) | _ -> None)
       env in
@@ -132,7 +132,7 @@ and run_goal loc env name args (params, patterns, deps, code) =
       failwithf "%a: calling goal ‘%s’ with wrong number of arguments"
         Ast.string_loc loc name in
   let env =
-    List.fold_left (fun env (k, v) -> Ast.StringMap.add k v env)
+    List.fold_left (fun env (k, v) -> Ast.Env.add k v env)
       env params in
 
   (* Evaluate the dependencies first. *)
@@ -161,7 +161,7 @@ and simplify env = function
 
   | Ast.EVar (loc, name) ->
      let expr =
-       try Ast.StringMap.find name env
+       try Ast.Env.find name env
        with Not_found ->
          failwithf "%a: variable ‘%s’ not found" Ast.string_loc loc name in
      simplify env expr
@@ -196,7 +196,7 @@ and substitute loc env substs =
     | Ast.SString s -> Buffer.add_string b s
     | Ast.SVar name ->
        let expr =
-         try Ast.StringMap.find name env
+         try Ast.Env.find name env
          with Not_found ->
            failwithf "%a: variable ‘%s’ not found" Ast.string_loc loc name in
        match simplify env expr with

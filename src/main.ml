@@ -77,7 +77,7 @@ let main () =
         (* assignment *)
         let name = Str.matched_group 1 arg in
         let expr = Parse.parse_cli_expr (Str.matched_group 2 arg) in
-        env := Ast.StringMap.add name expr !env
+        env := Ast.Env.add name expr !env
       )
       else (
         (* target *)

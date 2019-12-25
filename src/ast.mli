@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-module StringMap : sig
+module Env : sig
   type key = string
   type 'a t
   val empty: 'a t
@@ -36,7 +36,7 @@ val string_loc : unit -> loc -> string
 
 (** An environment is a set of variable and goal definitions, mapping
     variable or goal name -> expression. *)
-type env = expr StringMap.t
+type env = expr Env.t
 and pattern =
   (** match tactic such as file ("filename") *)
   | PTactic of loc * id * substs list

@@ -49,8 +49,8 @@ file:
 stmts:
     | list(stmt)
     { List.fold_left (
-        fun env (name, expr) -> Ast.StringMap.add name expr env
-      ) Ast.StringMap.empty $1
+        fun env (name, expr) -> Ast.Env.add name expr env
+      ) Ast.Env.empty $1
     }
     ;
 stmt:
