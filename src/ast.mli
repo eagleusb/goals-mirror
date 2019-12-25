@@ -38,7 +38,7 @@ val string_loc : unit -> loc -> string
     variable or goal name -> expression. *)
 type env = expr Env.t
 and pattern =
-  (** match tactic such as file ("filename") *)
+  (** match tactic such as *file ("filename") *)
   | PTactic of loc * id * substs list
   (** match named variable, which must be a string or list *)
   | PVar of loc * id
