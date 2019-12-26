@@ -71,12 +71,14 @@ stmt:
     ;
 
 goal_stmt:
-    | GOAL ID option(param_decl) EQUALS
+    | GOAL ID option(params_decl) EQUALS
     { $2, match $3 with None -> [] | Some ps -> ps }
     ;
-param_decl:
-    | LEFT_PAREN separated_list(COMMA, ID) RIGHT_PAREN { $2 }
+params_decl:
+    | LEFT_PAREN separated_list(COMMA, param_decl) RIGHT_PAREN { $2 }
     ;
+param_decl:
+    | ID         { $1 }
 
 patterns:
     | separated_list(COMMA, pattern) { $1 }

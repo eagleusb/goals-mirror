@@ -60,7 +60,9 @@ and expr =
   | EConstant of loc * constant
 and constant =
   | CString of string
-and goal = id list * pattern list * expr list * code option
+and goal = param_decl list * pattern list * expr list * code option
+  (** Goal parameter is the parameter name and an optional default value. *)
+and param_decl = id
 and id = string
 and code = substs
 and substs = subst list

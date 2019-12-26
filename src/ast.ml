@@ -47,7 +47,8 @@ and expr =
   | EConstant of loc * constant
 and constant =
   | CString of string
-and goal = id list * pattern list * expr list * code option
+and goal = param_decl list * pattern list * expr list * code option
+and param_decl = id
 and id = string
 and code = substs
 and substs = subst list
@@ -142,29 +143,28 @@ let iter_with_commas
       f fp x
   ) xs
 
-let rec print_env fp env =
-  Env.iter (print_def fp) env
+let rec string_env () env =
+  let env = Env.bindings env in
+  String.concat "" (List.map (string_def ()) env)
 
-and print_def fp name expr =
+and print_env fp env = output_string fp (string_env () env)
+
+and string_def () (name, expr) =
   match expr with
-  | EGoal (loc, (params, patterns, exprs, code)) ->
-     fprintf fp "goal %s (%s) =\n" name (String.concat ", " params);
-     fprintf fp "    ";
-     iter_with_commas fp print_pattern patterns;
-     fprintf fp " : ";
-     iter_with_commas fp print_expr exprs;
-     (match code with
-      | None -> ()
-      | Some code ->
-         fprintf fp " {\n";
-         print_code fp code;
-         fprintf fp "\n    }"
-     );
-     fprintf fp "\n"
-  | expr ->
-     fprintf fp "let %s = " name;
-     print_expr fp expr;
-     fprintf fp "\n"
+  | EGoal (loc, goal) -> string_goal () (Some name, goal) ^ "\n"
+  | expr -> sprintf "let %s = %a\n" name string_expr expr;
+
+and print_def fp name expr = output_string fp (string_def () (name, expr))
+
+and string_goal () (name, (param_decls, patterns, exprs, code)) =
+  sprintf "goal%s (%s) = %s : %s%s"
+    (match name with None -> "" | Some name -> " " ^ name)
+    (String.concat ", " (List.map (string_param_decl ()) param_decls))
+    (String.concat ", " (List.map (string_pattern ()) patterns))
+    (String.concat ", " (List.map (string_expr ()) exprs))
+    (match code with None -> "" | Some code -> " = { ... }")
+
+and string_param_decl () name = name
 
 and string_pattern () = function
   | PTactic (loc, name, params) ->
@@ -175,12 +175,7 @@ and string_pattern () = function
 and print_pattern fp p = output_string fp (string_pattern () p)
 
 and string_expr () = function
-  | EGoal (loc, (params, patterns, exprs, code)) ->
-     sprintf "goal (%s) = %s : %s%s"
-       (String.concat ", " params)
-       (String.concat ", " (List.map (string_pattern ()) patterns))
-       (String.concat ", " (List.map (string_expr ()) exprs))
-       (match code with None -> "" | Some code -> " = { ... }")
+  | EGoal (loc, goal) -> string_goal () (None, goal)
   | ECall (loc, name, params) ->
      sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))
