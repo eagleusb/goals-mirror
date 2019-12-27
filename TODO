@@ -1,1 +1,6 @@
 'let :=' for immediate evaluation in assignment.
+
+Default parameters, ie:
+  goal foo (name, release = true) = ...
+You might only allow defaults to be added to the end, or you
+might allow goals to be called with labelled parameters.
