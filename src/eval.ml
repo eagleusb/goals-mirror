@@ -79,7 +79,22 @@ and run_goal env loc name args (params, patterns, deps, code) =
     (match code with
      | None -> ()
      | Some code ->
-        let code = Ast.substitute env loc code in
+        (* Add some standard variables to the environment. *)
+        let expr_of_substs s = Ast.ESubsts (Ast.noloc, s) in
+        let expr_of_pattern = function
+          | Ast.PTactic (loc, tactic, targs) ->
+             Ast.ETactic (loc, tactic, List.map expr_of_substs targs)
+          | Ast.PVar (loc, name) ->
+             Ast.EVar (loc, name)
+        in
+        let pexprs = List.map expr_of_pattern patterns in
+        let env = Ast.Env.add "@" (Ast.EList (Ast.noloc, pexprs)) env in
+        let env = Ast.Env.add "<" (Ast.EList (Ast.noloc, deps)) env in
+        let env =
+          match deps with
+          | [] -> env
+          | d :: _ -> Ast.Env.add "^" d env in
+        let code = Ast.to_shell_script env loc code in
         Printf.printf "running : %s\n" code
     );
 
