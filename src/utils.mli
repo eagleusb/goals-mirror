@@ -28,3 +28,9 @@ val filter_map : ('a -> 'b option) -> 'a list -> 'b list
 val string_find : string -> string -> int
 (** [string_find str sub] finds the index of [sub] in [str].  If
     not found, returns -1. *)
+
+val isspace : char -> bool
+val triml : ?test:(char -> bool) -> string -> string
+val trimr : ?test:(char -> bool) -> string -> string
+val trim : ?test:(char -> bool) -> string -> string
+(** Trim strings at left, right or both. *)

@@ -17,6 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
+open Printf
+
 open Utils
 
 let rec evaluate_targets env exprs =
@@ -94,7 +96,12 @@ and run_goal env loc name args (params, patterns, deps, code) =
           | [] -> env
           | d :: _ -> Ast.Env.add "^" d env in
         let code = Ast.to_shell_script env loc code in
-        Printf.printf "running : %s\n" code
+        printf "%s\n%!" (trim code);
+        let r = Sys.command code in
+        if r <> 0 then (
+          eprintf "*** goal ‘%s’ failed with exit code %d\n" name r;
+          exit 1
+        )
     );
 
     (* Check all targets were updated (else it's an error). *)

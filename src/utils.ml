@@ -54,3 +54,28 @@ let rec string_find s sub =
       -1 (* not found *)
   in
   loop 0
+
+let isspace c =
+  c = ' '
+  (* || c = '\f' *) || c = '\n' || c = '\r' || c = '\t' (* || c = '\v' *)
+
+let triml ?(test = isspace) str =
+  let i = ref 0 in
+  let n = ref (String.length str) in
+  while !n > 0 && test str.[!i]; do
+    decr n;
+    incr i
+  done;
+  if !i = 0 then str
+  else String.sub str !i !n
+
+let trimr ?(test = isspace) str =
+  let n = ref (String.length str) in
+  while !n > 0 && test str.[!n-1]; do
+    decr n
+  done;
+  if !n = String.length str then str
+  else String.sub str 0 !n
+
+let trim ?(test = isspace) str =
+  trimr ~test (triml ~test str)
