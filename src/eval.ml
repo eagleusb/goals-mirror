@@ -71,8 +71,7 @@ and run_goal env loc name args (params, patterns, deps, code) =
   evaluate_targets env deps;
 
   (* Check if any target (ie. pattern) needs to be rebuilt. *)
-  let rebuild =
-    List.exists (needs_rebuild env loc name deps) patterns in
+  let rebuild = List.exists (needs_rebuild env loc deps) patterns in
 
   if rebuild then (
     (* Run the code (if any). *)
@@ -100,7 +99,7 @@ and run_goal env loc name args (params, patterns, deps, code) =
 
     (* Check all targets were updated (else it's an error). *)
     let pattern_still_needs_rebuild =
-      try Some (List.find (needs_rebuild env loc name deps) patterns)
+      try Some (List.find (needs_rebuild env loc deps) patterns)
       with Not_found -> None in
     match pattern_still_needs_rebuild with
     | None -> ()
@@ -112,7 +111,7 @@ and run_goal env loc name args (params, patterns, deps, code) =
   )
 
 (* Return whether the target (pattern) needs to be rebuilt. *)
-and needs_rebuild env loc name deps pattern =
+and needs_rebuild env loc deps pattern =
   match pattern with
   | Ast.PTactic (loc, tactic, targs) ->
      (* Resolve the targs down to constants. *)
@@ -157,23 +156,30 @@ and run_tactic env loc tactic cargs =
         | Some args -> Some (pattern, name, goal, args)
     ) patterns in
 
-  let _, name, goal, args =
-    match patterns with
-    | [p] -> p
-    | [] ->
+  match patterns with
+  | [_, name, goal, args] ->
+     run_goal env loc name args goal
+
+  | [] ->
+     (* There's no matching goal, but we don't need one if
+      * the tactic doesn't need to be rebuilt.
+      *)
+     let targs = List.map (function Ast.CString s -> [Ast.SString s]) cargs in
+     let p = Ast.PTactic (loc, tactic, targs) in
+     if needs_rebuild env loc [] p then (
        let t = Ast.ETactic (loc, tactic,
                             List.map (fun c -> Ast.EConstant (loc, c))
                               cargs) in
        failwithf "%a: don't know how to build %a"
          Ast.string_loc loc Ast.string_expr t
-    | _ ->
-       (* If there are multiple matching goals, then assuming the goals
-        * are different we must pick the one which was defined last in
-        * the file.  However we don't do that right now. XXX
-        *)
-       assert false (* TODO! *) in
+     )
 
-  run_goal env loc name args goal
+  | _ ->
+     (* If there are multiple matching goals, then assuming the goals
+      * are different we must pick the one which was defined last in
+      * the file.  However we don't do that right now. XXX
+      *)
+     assert false (* TODO! *)
 
 (* Test if pattern matches *tactic(cargs).  If it does
  * then we return Some args where args is the arguments that must
