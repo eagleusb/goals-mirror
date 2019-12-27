@@ -2,7 +2,8 @@
 
 goal all = : "file1.o", *file("file2.o")
 
-"file1.o" : "file1.c" {
-  echo file1.c "->" file1.o
-  touch file1.o
+goal compile (name) =
+"%name.o" : "%name.c" {
+  echo %< "->" %@
+  touch %@
 }

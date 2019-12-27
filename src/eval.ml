@@ -98,7 +98,18 @@ and run_goal env loc name args (params, patterns, deps, code) =
 
 (* Return whether the target (pattern) needs to be rebuilt. *)
 and needs_rebuild env loc name deps pattern =
-  false (* XXX *)
+  match pattern with
+  | Ast.PTactic (loc, tactic, targs) ->
+     (* Resolve the targs down to constants. *)
+     let targs = List.map (Ast.substitute env loc) targs in
+     (* XXX Look up the tactic.
+      * We would do that, but for now hard code the *file tactic. XXX
+      *)
+     assert (tactic = "file");
+     assert (List.length targs = 1);
+     let targ = List.hd targs in
+     not (Sys.file_exists targ)
+  | Ast.PVar _ -> assert false (* XXX not implemented *)
 
 (* Find the goal which matches the given tactic and run it.
  * cargs is a list of parameters (all constants).
