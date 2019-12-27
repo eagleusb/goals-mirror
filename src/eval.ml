@@ -31,8 +31,8 @@ and evaluate_target env = function
      run_goal env loc name args goal
 
   | Ast.ETactic (loc, name, args) ->
-     (* All parameters of tactics must be simple expressions (strings,
-      * in future booleans, numbers, etc).
+     (* All parameters of tactics must be simple constant expressions
+      * (strings, in future booleans, numbers, etc).
       *)
      let args = List.map (Ast.to_constant env) args in
      run_tactic env loc name args
@@ -101,52 +101,151 @@ and needs_rebuild env loc name deps pattern =
   false (* XXX *)
 
 (* Find the goal which matches the given tactic and run it.
- * const_args is a list of parameters (all constants).
+ * cargs is a list of parameters (all constants).
  *)
-and run_tactic env loc tactic const_args =
-  (* Search across all goals for a matching tactic. *)
+and run_tactic env loc tactic cargs =
+  (* Find all goals in the environment.  Returns a list of (name, goal). *)
   let goals =
     let env = Ast.Env.bindings env in
     filter_map
-      (function (name, Ast.EGoal (loc, goal)) -> Some (name, goal) | _ -> None)
-      env in
-  let name, goal =
-    (* If there are multiple goals matching, this must choose
-     * the most recently defined (XXX).
-     *)
-    try
-      List.find
-        (fun (_, (_, patterns, _, _)) ->
-          List.exists (matching_pattern env loc tactic const_args) patterns)
-        goals
-    with
-      Not_found ->
-        let tactic =
-          Ast.ETactic (loc, tactic,
-                       List.map (fun c -> Ast.EConstant (loc, c))
-                         const_args) in
-        failwithf "%a: don't know how to build %a"
-          Ast.string_loc loc Ast.string_expr tactic in
+      (function
+       | name, Ast.EGoal (loc, goal) -> Some (name, goal)
+       | _ -> None) env in
 
-  let args = [] (* XXX calculate free variables *) in
+  (* Find all patterns.  Returns a list of (pattern, name, goal). *)
+  let patterns : (Ast.pattern * Ast.id * Ast.goal) list =
+    List.flatten
+      (List.map (fun (name, ((_, patterns, _, _) as goal)) ->
+           List.map (fun pattern -> (pattern, name, goal)) patterns) goals) in
+
+  (* Find any patterns (ie. tactics) which match the one we
+   * are searching for.  This returns a binding for the goal args,
+   * so we end up with a list of (pattern, name, goal, args).
+   *)
+  let patterns : (Ast.pattern * Ast.id * Ast.goal * Ast.expr list) list =
+    filter_map (
+      fun (pattern, name, ((params, _, _, _) as goal)) ->
+        match matching_pattern env loc tactic cargs pattern params with
+        | None -> None
+        | Some args -> Some (pattern, name, goal, args)
+    ) patterns in
+
+  let _, name, goal, args =
+    match patterns with
+    | [p] -> p
+    | [] ->
+       let t = Ast.ETactic (loc, tactic,
+                            List.map (fun c -> Ast.EConstant (loc, c))
+                              cargs) in
+       failwithf "%a: don't know how to build %a"
+         Ast.string_loc loc Ast.string_expr t
+    | _ ->
+       (* If there are multiple matching goals, then assuming the goals
+        * are different we must pick the one which was defined last in
+        * the file.  However we don't do that right now. XXX
+        *)
+       assert false (* TODO! *) in
+
   run_goal env loc name args goal
 
-(* XXX This only does exact matches at the moment. *)
-and matching_pattern env loc tactic const_args = function
-  | Ast.PTactic (loc, constructor, params)
-       when tactic = constructor &&
-            List.length const_args = List.length params ->
-     (* Try to simplify the parameters of this pattern down
-      * to constants, but don't fail here if we can't do this.
+(* Test if pattern matches *tactic(cargs).  If it does
+ * then we return Some args where args is the arguments that must
+ * be passed to the matching goal.  The params parameter is
+ * the names of the parameters of that goal.
+ *)
+and matching_pattern env loc tactic cargs pattern params =
+  match pattern with
+  | Ast.PVar (loc, name) -> assert false (* TODO! *)
+  | Ast.PTactic (loc, ttactic, targs)
+       when tactic <> ttactic ||
+            List.length cargs <> List.length targs ->
+     None (* Can't possibly match if tactic name or #args is different. *)
+  | Ast.PTactic (loc, ttactic, targs) ->
+     (* Do the args match with a possible params binding? *)
+     try Some (matching_params env loc params targs cargs)
+     with Not_found -> None
+
+(* Return a possible binding.  For example the goal is:
+ *   goal compile (name) = "%name.o": "%name.c" {}
+ * which means that params = ["name"] and targs = ["%name.o"].
+ *
+ * If we are called with cargs = ["file1.o"], we would
+ * return ["file1"].
+ *
+ * On non-matching this raises Not_found.
+ *)
+and matching_params env loc params targs cargs =
+  (* This is going to record the resulting binding. *)
+  let res = ref Ast.Env.empty in
+  List.iter2 (matching_param env loc params res) targs cargs;
+
+  (* Rearrange the result into goal parameter order.  Also this
+   * checks that every parameter got a binding.
+   *)
+  let res = !res in
+  List.map (
+    (* Allow the Not_found exception to escape if no binding for this param. *)
+    fun param -> Ast.Env.find param res
+  ) params
+
+(* If targ = "%name.o" and carg = "file.o" then this would set
+ * name => "file" in !res.  If they don't match, raises Not_found.
+ *)
+and matching_param env loc params res targ carg =
+  match carg with
+  | Ast.CString carg ->
+     (* Substitute any non parameters in targ from the environment. *)
+     let targ =
+       List.map (
+         function
+         | Ast.SString _ as s -> s
+         | Ast.SVar name ->
+            if not (List.mem name params) then (
+              try
+                let expr = Ast.getvar env loc name in
+                match Ast.to_constant env expr with
+                | Ast.CString s -> Ast.SString s
+              with Failure _ -> raise Not_found
+            )
+            else
+              Ast.SVar name
+       ) targ in
+
+     (* Do the actual pattern matching.  Any remaining SVar elements
+      * must refer to goal parameters.
       *)
-     (try
-        let params = List.map (Ast.substitute env loc) params in
-        let params = List.map (fun s -> Ast.CString s) params in
-        const_args = params
-      with Failure _ -> false
-     )
-
-  | Ast.PTactic _ -> false
-
-  | Ast.PVar (loc, name) -> assert false (* not implemented *)
-
+     let carg = ref carg in
+     let rec loop = function
+       | [] ->
+          (* End of targ, we must have matched all of carg. *)
+          if !carg <> "" then raise Not_found
+       | Ast.SString s :: rest ->
+          (* Does this match the first part of !carg? *)
+          let clen = String.length !carg in
+          let slen = String.length s in
+          if slen > clen || s <> String.sub !carg 0 slen then
+            raise Not_found;
+          (* Yes, so continue after the matching prefix. *)
+          carg := String.sub !carg slen (clen-slen);
+          loop rest
+       | Ast.SVar name :: Ast.SString s :: rest ->
+          (* This is a goal parameter.  Find s later in !carg. *)
+          let i = string_find !carg s in
+          if i = -1 then raise Not_found;
+          (* Set the binding in !res. *)
+          let r = Ast.EConstant (Ast.noloc,
+                                 Ast.CString (String.sub !carg 0 i)) in
+          res := Ast.Env.add name r !res;
+          (* Continue after the match. *)
+          let skip = i + String.length s in
+          carg := String.sub !carg skip (String.length !carg - skip);
+          loop rest
+       | Ast.SVar name :: [] ->
+          (* Matches the whole remainder of the string. *)
+          let r = Ast.EConstant (Ast.noloc, Ast.CString !carg) in
+          res := Ast.Env.add name r !res
+       | Ast.SVar x :: Ast.SVar y :: _ ->
+          (* TODO! We cannot match a target like "%x%y". *)
+          assert false
+     in
+     loop targ

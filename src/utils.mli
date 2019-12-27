@@ -24,3 +24,7 @@ val filter_map : ('a -> 'b option) -> 'a list -> 'b list
 (** [filter_map f l] applies [f] to every element of [l], filters
     out the [None] elements and returns the list of the arguments of
     the [Some] elements. *)
+
+val string_find : string -> string -> int
+(** [string_find str sub] finds the index of [sub] in [str].  If
+    not found, returns -1. *)
