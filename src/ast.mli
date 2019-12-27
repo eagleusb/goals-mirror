@@ -90,6 +90,12 @@ val to_constant : env -> expr -> constant
     raises [Failure _]. *)
 val substitute : env -> loc -> substs -> string
 
+(** Similar to {!substitute} except this is used where we will
+    pass the result immediately to the shell to execute.  Variables
+    are substituted with shell quoted strings.  Raises [Failure _]
+    on error. *)
+val to_shell_script : env -> loc -> substs -> string
+
 (** This is used for incrementally building Ast.substs in the parser. *)
 module Substs : sig
   type t

@@ -112,6 +112,45 @@ and substitute env loc substs =
   ) substs;
   Buffer.contents b
 
+let rec to_shell_script env loc substs =
+  let b = Buffer.create 13 in
+  List.iter (
+    function
+    | SString s -> Buffer.add_string b s
+    | SVar name ->
+       let expr = getvar env loc name in
+       let s = expr_to_shell_string env expr in
+       Buffer.add_string b s
+  ) substs;
+  Buffer.contents b
+
+and expr_to_shell_string env = function
+  | EConstant (loc, CString s) -> Filename.quote s
+
+  | EVar (loc, name) ->
+     let expr = getvar env loc name in
+     expr_to_shell_string env expr
+
+  | ESubsts (loc, str) ->
+     Filename.quote (substitute env loc str)
+
+  | EList (loc, exprs) ->
+     let strs = List.map (expr_to_shell_string env) exprs in
+     (* These are shell quoted so we can just concat them with space. *)
+     String.concat " " strs
+
+  | ECall (loc, name, _) ->
+     failwithf "%a: cannot use goal ‘%s’ in shell expansion"
+       string_loc loc name
+
+  (* Tactics expand to the first parameter. *)
+  | ETactic (loc, _, []) -> Filename.quote ""
+  | ETactic (loc, _, (arg :: _)) -> expr_to_shell_string env arg
+
+  | EGoal (loc, _) ->
+     failwithf "%a: cannot use goal in shell expansion"
+       string_loc loc
+
 module Substs = struct
   type t = {
       mutable elems : subst list; (* built in reverse order *)

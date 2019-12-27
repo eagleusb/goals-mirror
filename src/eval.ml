@@ -101,7 +101,8 @@ and needs_rebuild env loc name deps pattern =
   match pattern with
   | Ast.PTactic (loc, tactic, targs) ->
      (* Resolve the targs down to constants. *)
-     let targs = List.map (Ast.substitute env loc) targs in
+     let targs = List.map ((* XXX Ast.to_shell_script *)
+                            Ast.substitute env loc) targs in
      (* XXX Look up the tactic.
       * We would do that, but for now hard code the *file tactic. XXX
       *)
