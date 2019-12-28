@@ -40,9 +40,6 @@ type env = expr Env.t
 and pattern =
   (** match tactic such as *file ("filename") *)
   | PTactic of loc * id * substs list
-  (** match named variable, which must be a string, ETactic or
-      a list of those *)
-  | PVar of loc * id
 and expr =
   (** goal (params) = patterns : exprs = code *)
   | EGoal of loc * goal

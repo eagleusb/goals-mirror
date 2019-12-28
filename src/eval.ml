@@ -85,8 +85,6 @@ and run_goal env loc name args (params, patterns, deps, code) =
         let expr_of_pattern = function
           | Ast.PTactic (loc, tactic, targs) ->
              Ast.ETactic (loc, tactic, List.map expr_of_substs targs)
-          | Ast.PVar (loc, name) ->
-             Ast.EVar (loc, name)
         in
         let pexprs = List.map expr_of_pattern patterns in
         let env = Ast.Env.add "@" (Ast.EList (Ast.noloc, pexprs)) env in
@@ -131,7 +129,6 @@ and needs_rebuild env loc deps pattern =
      assert (List.length targs = 1);
      let targ = List.hd targs in
      not (Sys.file_exists targ)
-  | Ast.PVar _ -> assert false (* XXX not implemented *)
 
 (* Find the goal which matches the given tactic and run it.
  * cargs is a list of parameters (all constants).
@@ -195,7 +192,6 @@ and run_tactic env loc tactic cargs =
  *)
 and matching_pattern env loc tactic cargs pattern params =
   match pattern with
-  | Ast.PVar (loc, name) -> assert false (* TODO! *)
   | Ast.PTactic (loc, ttactic, targs)
        when tactic <> ttactic ||
             List.length cargs <> List.length targs ->

@@ -36,7 +36,6 @@ let print_loc fp loc =
 type env = expr Env.t
 and pattern =
   | PTactic of loc * id * substs list
-  | PVar of loc * id
 and expr =
   | EGoal of loc * goal
   | ECall of loc * id * expr list
@@ -208,8 +207,7 @@ and string_param_decl () name = name
 and string_pattern () = function
   | PTactic (loc, name, params) ->
      sprintf "*%s (%s)" name (String.concat ", "
-                                (List.map (string_substs ()) params));
-  | PVar (loc, id) -> id
+                                (List.map (string_substs ()) params))
 
 and print_pattern fp p = output_string fp (string_pattern () p)
 
