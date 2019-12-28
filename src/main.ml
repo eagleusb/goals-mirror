@@ -35,7 +35,20 @@ For detailed help see goals(1).
 
 Options:"
 
+let print_version () =
+  printf "%s %s\n" Config.package_name Config.package_version;
+  exit 0
+
 let main () =
+  (* Get stdlib directory. *)
+  let datadir =
+    try Sys.getenv "GOALS_DATADIR" with Not_found -> Config.datadir in
+  let stdlibdir = datadir // "stdlib" in
+  let prelude_gl = stdlibdir // "prelude.gl" in
+  if not (is_directory stdlibdir) || not (Sys.file_exists prelude_gl) then
+    failwithf "%s: cannot find the standard library directory, expected %s.  If the standard library directory is in a non-standard location then set GOALS_DATADIR.  If you can trying to run goals from the build directory then use ‘./run goals ...’"
+      Sys.executable_name stdlibdir;
+
   (* Command line arguments. *)
   let args = ref [] in
   let directory = ref "." in
@@ -50,6 +63,10 @@ let main () =
                    "filename Set name of Goalfile";
     "--file",      Arg.Set_string filename,
                    "filename Set name of Goalfile";
+    "-V",          Arg.Unit print_version,
+                   " Print version and exit";
+    "--version",   Arg.Unit print_version,
+                   " Print version and exit";
   ] in
   let argspec = Arg.align argspec in
   let anon_fun s = args := s :: !args in

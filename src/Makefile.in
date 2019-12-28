@@ -17,6 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 OBJECTS = \
+	config.cmx \
 	utils.cmx \
 	ast.cmx \
 	parser.cmx \
@@ -65,7 +66,10 @@ depend: .depend
 -include .depend
 
 Makefile: Makefile.in ../config.status
-	../config.status Makefile
+	../config.status $@
+
+config.ml: config.ml.in ../config.status
+	../config.status $@
 
 .PHONY: all clean depend
 

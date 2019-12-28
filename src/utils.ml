@@ -21,6 +21,9 @@ open Printf
 
 let failwithf fs = ksprintf failwith fs
 
+let (//) = Filename.concat
+let is_directory d = try Sys.is_directory d with Sys_error _ -> false
+
 (* From OCaml 4.08 sources.  We can remove this when we can
  * depend on min OCaml 4.08.
  *)

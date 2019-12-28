@@ -18,6 +18,8 @@ config.log
 /config.h.in
 /config.status
 /install-sh
+/run
+/src/config.ml
 /src/goals
 /src/lexer.ml
 /src/parser.conflicts

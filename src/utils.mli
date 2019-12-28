@@ -20,6 +20,12 @@
 val failwithf : ('a, unit, string, 'b) format4 -> 'a
 (** Like [failwith] but supports printf-like arguments. *)
 
+val (//) : string -> string -> string
+(** The {!Filename.concat} function. *)
+
+val is_directory : string -> bool
+(** Return true iff parameter is a directory. *)
+
 val filter_map : ('a -> 'b option) -> 'a list -> 'b list
 (** [filter_map f l] applies [f] to every element of [l], filters
     out the [None] elements and returns the list of the arguments of
