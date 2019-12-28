@@ -51,10 +51,10 @@ rule read =
     | '"'     { read_string (Ast.Substs.create ()) lexbuf }
     | "{"     { read_code (Ast.Substs.create ()) (ref 1) lexbuf }
     | "goal"  { GOAL }
+    | "tactic" { TACTIC_KEYWORD }
     | "let"   { LET }
-    | "*" id  { let id = Lexing.lexeme lexbuf in
-                let len = String.length id in
-                TACTIC (String.sub id 1 (len-1)) }
+    | "*" id  { (* NB: The initial '*' is part of the name. *)
+                TACTIC (Lexing.lexeme lexbuf) }
     | id      { ID (Lexing.lexeme lexbuf) }
     | _       { raise (SyntaxError ("unexpected character: " ^
                                     Lexing.lexeme lexbuf)) }

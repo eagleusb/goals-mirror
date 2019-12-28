@@ -41,12 +41,14 @@ and pattern =
   (** match tactic such as *file ("filename") *)
   | PTactic of loc * id * substs list
 and expr =
-  (** goal (params) = patterns : exprs = code *)
+  (** goal (params) = patterns : exprs code *)
   | EGoal of loc * goal
-  (** goalname (params) etc. *)
-  | ECall of loc * id * expr list
-  (** *tactic (params) etc. *)
-  | ETactic of loc * id * expr list
+  (** tactic (params) = code *)
+  | ETactic of loc * tactic
+  (** call goalname (params) etc. *)
+  | ECallGoal of loc * id * expr list
+  (** call *tactic (params) etc. *)
+  | ECallTactic of loc * id * expr list
   (** variable, or goal call with no parameters *)
   | EVar of loc * id
   (** list *)
@@ -58,7 +60,8 @@ and expr =
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
-  (** Goal parameter is the parameter name and an optional default value. *)
+and tactic = param_decl list * code
+  (** Goal/tactic parameter. *)
 and param_decl = id
 and id = string
 and code = substs
@@ -76,6 +79,10 @@ val getvar : env -> loc -> id -> expr
 (** Look up a goal in the environment.  Raise [Failure _] if not
     found or if the named variable is not a goal. *)
 val getgoal : env -> loc -> id -> goal
+
+(** Look up a tactic in the environment.  Raise [Failure _] if not
+    found or if the named variable is not a tactic. *)
+val gettactic : env -> loc -> id -> tactic
 
 (** Take any expression and simplify it down to a constant.
     If the expression cannot be simplified then this raises

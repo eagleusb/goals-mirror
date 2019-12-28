@@ -7,3 +7,8 @@ goal compile (name) =
   echo %< "->" %@
   touch %@
 }
+
+tactic *file (filename) = {
+    test -f %filename || exit 99
+    # XXX older than %<
+}

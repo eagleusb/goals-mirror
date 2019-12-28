@@ -38,8 +38,9 @@ and pattern =
   | PTactic of loc * id * substs list
 and expr =
   | EGoal of loc * goal
-  | ECall of loc * id * expr list
-  | ETactic of loc * id * expr list
+  | ETactic of loc * tactic
+  | ECallGoal of loc * id * expr list
+  | ECallTactic of loc * id * expr list
   | EVar of loc * id
   | EList of loc * expr list
   | ESubsts of loc * substs
@@ -47,6 +48,7 @@ and expr =
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
+and tactic = param_decl list * code
 and param_decl = id
 and id = string
 and code = substs
@@ -73,6 +75,20 @@ let getgoal env loc name =
          string_loc loc name in
   goal
 
+let gettactic env loc name =
+  assert (name.[0] = '*');
+  let expr =
+    try Env.find name env
+    with Not_found ->
+      failwithf "%a: tactic ‘%s’ not found" string_loc loc name in
+  let tactic =
+    match expr with
+    | ETactic (loc, tactic) -> tactic
+    | _ ->
+       failwithf "%a: tried to call ‘%s’ which is not a tactic"
+         string_loc loc name in
+  tactic
+
 let rec to_constant env = function
   | EConstant (loc, c) -> c
 
@@ -87,16 +103,20 @@ let rec to_constant env = function
      failwithf "%a: list found where constant expression expected"
        string_loc loc
 
-  | ECall (loc, name, _) ->
+  | ECallGoal (loc, name, _) ->
      failwithf "%a: cannot use goal ‘%s’ in constant expression"
        string_loc loc name
 
-  | ETactic (loc, name, _) ->
-     failwithf "%a: cannot use tactic ‘*%s’ in constant expression"
+  | ECallTactic (loc, name, _) ->
+     failwithf "%a: cannot use tactic ‘%s’ in constant expression"
        string_loc loc name
 
   | EGoal (loc, _) ->
      failwithf "%a: cannot use goal in constant expression"
+       string_loc loc
+
+  | ETactic (loc, _) ->
+     failwithf "%a: cannot use tactic in constant expression"
        string_loc loc
 
 and substitute env loc substs =
@@ -138,16 +158,20 @@ and expr_to_shell_string env = function
      (* These are shell quoted so we can just concat them with space. *)
      String.concat " " strs
 
-  | ECall (loc, name, _) ->
+  | ECallGoal (loc, name, _) ->
      failwithf "%a: cannot use goal ‘%s’ in shell expansion"
        string_loc loc name
 
   (* Tactics expand to the first parameter. *)
-  | ETactic (loc, _, []) -> Filename.quote ""
-  | ETactic (loc, _, (arg :: _)) -> expr_to_shell_string env arg
+  | ECallTactic (loc, _, []) -> Filename.quote ""
+  | ECallTactic (loc, _, (arg :: _)) -> expr_to_shell_string env arg
 
   | EGoal (loc, _) ->
      failwithf "%a: cannot use goal in shell expansion"
+       string_loc loc
+
+  | ETactic (loc, _) ->
+     failwithf "%a: cannot use tactic in shell expansion"
        string_loc loc
 
 module Substs = struct
@@ -190,6 +214,7 @@ and print_env fp env = output_string fp (string_env () env)
 and string_def () (name, expr) =
   match expr with
   | EGoal (loc, goal) -> string_goal () (Some name, goal) ^ "\n"
+  | ETactic (loc, tactic) -> string_tactic () (Some name, tactic) ^ "\n"
   | expr -> sprintf "let %s = %a\n" name string_expr expr;
 
 and print_def fp name expr = output_string fp (string_def () (name, expr))
@@ -202,22 +227,28 @@ and string_goal () (name, (param_decls, patterns, exprs, code)) =
     (String.concat ", " (List.map (string_expr ()) exprs))
     (match code with None -> "" | Some code -> " = { ... }")
 
+and string_tactic () (name, (param_decls, code)) =
+  sprintf "tactic%s (%s) = { ... }"
+    (match name with None -> "" | Some name -> " " ^ name)
+    (String.concat ", " (List.map (string_param_decl ()) param_decls))
+
 and string_param_decl () name = name
 
 and string_pattern () = function
   | PTactic (loc, name, params) ->
-     sprintf "*%s (%s)" name (String.concat ", "
+     sprintf "%s (%s)" name (String.concat ", "
                                 (List.map (string_substs ()) params))
 
 and print_pattern fp p = output_string fp (string_pattern () p)
 
 and string_expr () = function
   | EGoal (loc, goal) -> string_goal () (None, goal)
-  | ECall (loc, name, params) ->
+  | ETactic (loc, goal) -> string_tactic () (None, goal)
+  | ECallGoal (loc, name, params) ->
      sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))
-  | ETactic (loc, name, params) ->
-     sprintf "*%s (%s)"
+  | ECallTactic (loc, name, params) ->
+     sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))
   | EVar (loc, var) -> var
   | EList (loc, xs) ->

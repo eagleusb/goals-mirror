@@ -36,6 +36,7 @@ open Printf
 %token RIGHT_PAREN
 %token <Ast.substs> STRING
 %token <string> TACTIC
+%token TACTIC_KEYWORD
 
 (* Start nonterminals. *)
 %start <Ast.env> file
@@ -67,6 +68,10 @@ stmt:
       let name, params = $1 in
       name, Ast.EGoal ($loc, (params, [], [], Some $2))
     }
+    | TACTIC_KEYWORD TACTIC params_decl EQUALS CODE
+    {
+      $2, Ast.ETactic ($loc, ($3, $5))
+    }
     | LET ID EQUALS expr { $2, $4 }
     ;
 
@@ -84,7 +89,7 @@ patterns:
     | separated_list(COMMA, pattern) { $1 }
     ;
 pattern:
-    | STRING     { Ast.PTactic ($loc, "file", [$1]) }
+    | STRING     { Ast.PTactic ($loc, "*file", [$1]) }
     | ID pattern_params { Ast.PTactic ($loc, $1, $2) }
     ;
 pattern_params:
@@ -95,9 +100,9 @@ pattern_param:
     ;
 
 expr:
-    | ID params  { Ast.ECall ($loc, $1, $2) }
+    | ID params  { Ast.ECallGoal ($loc, $1, $2) }
     | ID         { Ast.EVar ($loc, $1) }
-    | TACTIC params { Ast.ETactic ($loc, $1, $2) }
+    | TACTIC params { Ast.ECallTactic ($loc, $1, $2) }
     | STRING     { Ast.ESubsts ($loc, $1) }
     | LEFT_ARRAY barelist RIGHT_ARRAY { Ast.EList ($loc, $2) }
     ;

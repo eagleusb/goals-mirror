@@ -25,14 +25,15 @@ let rec evaluate_targets env exprs =
   List.iter (evaluate_target env) exprs
 
 and evaluate_target env = function
-  | Ast.EGoal _ -> assert false
+  | Ast.EGoal _ | Ast.ETactic _ -> assert false
 
   (* Call a goal. *)
-  | Ast.ECall (loc, name, args) ->
+  | Ast.ECallGoal (loc, name, args) ->
      let goal = Ast.getgoal env loc name in
      run_goal env loc name args goal
 
-  | Ast.ETactic (loc, name, args) ->
+  (* Call a tactic. *)
+  | Ast.ECallTactic (loc, name, args) ->
      (* All parameters of tactics must be simple constant expressions
       * (strings, in future booleans, numbers, etc).
       *)
@@ -51,10 +52,10 @@ and evaluate_target env = function
   (* A string (with or without substitutions) implies *file(filename). *)
   | Ast.ESubsts (loc, str) ->
      let str = Ast.substitute env loc str in
-     run_tactic env loc "file" [Ast.CString str]
+     run_tactic env loc "*file" [Ast.CString str]
 
   | Ast.EConstant (loc, c) ->
-     run_tactic env loc "file" [c]
+     run_tactic env loc "*file" [c]
 
 (* Run a goal by name. *)
 and run_goal env loc name args (params, patterns, deps, code) =
@@ -84,7 +85,7 @@ and run_goal env loc name args (params, patterns, deps, code) =
         let expr_of_substs s = Ast.ESubsts (Ast.noloc, s) in
         let expr_of_pattern = function
           | Ast.PTactic (loc, tactic, targs) ->
-             Ast.ETactic (loc, tactic, List.map expr_of_substs targs)
+             Ast.ECallTactic (loc, tactic, List.map expr_of_substs targs)
         in
         let pexprs = List.map expr_of_pattern patterns in
         let env = Ast.Env.add "@" (Ast.EList (Ast.noloc, pexprs)) env in
@@ -119,16 +120,44 @@ and run_goal env loc name args (params, patterns, deps, code) =
 and needs_rebuild env loc deps pattern =
   match pattern with
   | Ast.PTactic (loc, tactic, targs) ->
-     (* Resolve the targs down to constants. *)
-     let targs = List.map ((* XXX Ast.to_shell_script *)
-                            Ast.substitute env loc) targs in
-     (* XXX Look up the tactic.
-      * We would do that, but for now hard code the *file tactic. XXX
+     (* Look up the tactic. *)
+     let params, code = Ast.gettactic env loc tactic in
+
+     (* Resolve the targs down to constants.  Since needs_rebuild
+      * should be called with env containing the goal params, this
+      * should substitute any parameters in the tactic arguments.
       *)
-     assert (tactic = "file");
-     assert (List.length targs = 1);
-     let targ = List.hd targs in
-     not (Sys.file_exists targ)
+     let targs = List.map (Ast.substitute env loc) targs in
+     let targs =
+       List.map (fun targ ->
+           Ast.EConstant (Ast.noloc, Ast.CString targ)) targs in
+
+     (* Create a new environment binding parameter names
+      * to tactic args.
+      *)
+     let env =
+       let params =
+         try List.combine params targs
+         with Invalid_argument _ ->
+           failwithf "%a: calling tactic ‘%s’ with wrong number of arguments"
+             Ast.string_loc loc tactic in
+       List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
+
+     (* Add some standard variables to the environment. *)
+     let env = Ast.Env.add "<" (Ast.EList (Ast.noloc, deps)) env in
+     let env =
+       match deps with
+       | [] -> env
+       | d :: _ -> Ast.Env.add "^" d env in
+     let code = Ast.to_shell_script env loc code in
+     let code = "set -e\nset -x\n\n" ^ code in
+     let r = Sys.command code in
+     if r = 99 (* means "needs rebuild" *) then true
+     else if r = 0 (* means "doesn't need rebuild" *) then false
+     else (
+       eprintf "*** tactic ‘%s’ failed with exit code %d\n" tactic r;
+       exit 1
+     )
 
 (* Find the goal which matches the given tactic and run it.
  * cargs is a list of parameters (all constants).
@@ -171,9 +200,9 @@ and run_tactic env loc tactic cargs =
      let targs = List.map (function Ast.CString s -> [Ast.SString s]) cargs in
      let p = Ast.PTactic (loc, tactic, targs) in
      if needs_rebuild env loc [] p then (
-       let t = Ast.ETactic (loc, tactic,
-                            List.map (fun c -> Ast.EConstant (loc, c))
-                              cargs) in
+       let t = Ast.ECallTactic (loc, tactic,
+                                List.map (fun c -> Ast.EConstant (loc, c))
+                                  cargs) in
        failwithf "%a: don't know how to build %a"
          Ast.string_loc loc Ast.string_expr t
      )
