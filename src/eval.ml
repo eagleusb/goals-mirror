@@ -96,7 +96,7 @@ and run_goal env loc name args (params, patterns, deps, code) =
           | [] -> env
           | d :: _ -> Ast.Env.add "^" d env in
         let code = Ast.to_shell_script env loc code in
-        printf "%s\n%!" (trim code);
+        let code = "set -e\nset -x\n\n" ^ code in
         let r = Sys.command code in
         if r <> 0 then (
           eprintf "*** goal ‘%s’ failed with exit code %d\n" name r;
