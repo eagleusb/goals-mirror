@@ -1,4 +1,4 @@
-(* Goalfile parser
+(* Goals command line
  * Copyright (C) 2019 Richard W.M. Jones
  * Copyright (C) 2019 Red Hat Inc.
  *
@@ -17,5 +17,28 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-val parse_goalfile : Ast.env -> string -> Ast.env
-val parse_cli_expr : string -> Ast.expr
+val stdlibdir : string
+(** Get the stdlib directory. *)
+
+val prelude_file : string
+(** Get the absolute path of the prelude.gl file. *)
+
+val input_file : string
+(** Get the name of the input Goalfile.
+    This is an absolute path. *)
+
+val directory : string
+(** Get the name of working directory (-C option). *)
+
+val includes : string list
+(** Get list of include directories (-I option).
+    These are all absolute paths. *)
+
+val use_prelude : bool
+(** True if we should load the prelude, or false if --no-prelude. *)
+
+val anon_vars : (string * string) list
+(** List of anonymous variable assignments on the command line. *)
+
+val targets : string list
+(** List of target expressions on the command line. *)

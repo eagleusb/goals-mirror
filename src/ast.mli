@@ -26,6 +26,9 @@ module Env : sig
   val fold: (key -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
   val filter: (key -> 'a -> bool) -> 'a t -> 'a t
   val bindings: 'a t -> (key * 'a) list
+
+  (* This is not the normal Map.merge function. *)
+  val merge : 'a t -> 'a t -> 'a t
 end
 
 (** Location where we parsed from $loc = $startpos, $endpos *)

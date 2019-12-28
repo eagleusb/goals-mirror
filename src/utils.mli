@@ -40,3 +40,6 @@ val triml : ?test:(char -> bool) -> string -> string
 val trimr : ?test:(char -> bool) -> string -> string
 val trim : ?test:(char -> bool) -> string -> string
 (** Trim strings at left, right or both. *)
+
+val absolute_path : string -> string
+(** Convert any path into an absolute path. *)

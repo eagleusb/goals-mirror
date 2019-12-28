@@ -19,11 +19,12 @@
 OBJECTS = \
 	config.cmx \
 	utils.cmx \
+	cmdline.cmx \
 	ast.cmx \
+	eval.cmx \
 	parser.cmx \
 	lexer.cmx \
 	parse.cmx \
-	eval.cmx \
 	main.cmx
 
 all: goals
@@ -50,6 +51,8 @@ goals: $(OBJECTS)
 parser.ml parser.mli: stamp-parser
 stamp-parser: parser.mly
 	@MENHIR@ --explain $<
+# Hack required to get includes working.
+	echo 'val lexer_read : (Lexing.lexbuf -> token) option ref' >> parser.mli
 	touch $@
 
 lexer.ml: lexer.mll lexer.cmi parser.ml

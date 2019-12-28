@@ -22,7 +22,12 @@ open Printf
 
 open Utils
 
-module Env = Map.Make (String)
+module Env = struct
+  include Map.Make (String)
+
+  let merge env env' =
+    List.fold_left (fun env (k, v) -> add k v env) env (bindings env')
+end
 
 type loc = position * position
 let noloc = dummy_pos, dummy_pos

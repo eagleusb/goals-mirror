@@ -22,13 +22,18 @@ open Lexing
 
 open Printf
 
+let () =
+  Parser.lexer_read := Some Lexer.read
+
 let print_position fp lexbuf =
   let pos = lexbuf.lex_curr_p in
   fprintf fp "%s:%d:%d"
     pos.pos_fname pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
 
-let parse_file lexbuf =
-  try Parser.file Lexer.read lexbuf
+let parse_file env lexbuf =
+  try
+    let env' = Parser.file Lexer.read lexbuf in
+    Ast.Env.merge env env'
   with
   | SyntaxError msg ->
      eprintf "%a: %s\n" print_position lexbuf msg;
@@ -48,13 +53,13 @@ let parse_expr lexbuf =
      exit 1
 
 (* This is used to parse the Goalfile. *)
-let parse_goalfile filename =
+let parse_goalfile env filename =
   let fp = open_in filename in
   let lexbuf = Lexing.from_channel fp in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
-  let env : Ast.env = parse_file lexbuf in
+  let env' = parse_file env lexbuf in
   close_in fp;
-  env
+  env'
 
 (* This is used to parse dependency expressions on the command line. *)
 let parse_cli_expr str =

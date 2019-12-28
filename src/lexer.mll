@@ -53,6 +53,7 @@ rule read =
     | "goal"  { GOAL }
     | "tactic" { TACTIC_KEYWORD }
     | "let"   { LET }
+    | "include" { INCLUDE }
     | "*" id  { (* NB: The initial '*' is part of the name. *)
                 TACTIC (Lexing.lexeme lexbuf) }
     | id      { ID (Lexing.lexeme lexbuf) }

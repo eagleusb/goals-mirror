@@ -18,7 +18,14 @@
  *)
 
 %{
+open Utils
 open Printf
+
+(* This is initialized with Lexer.read once the program
+ * starts.  Doing this avoids a circular dependency caused
+ * by include files.
+ *)
+let lexer_read = ref None
 %}
 
 (* Tokens. *)
@@ -29,6 +36,7 @@ open Printf
 %token EOF
 %token GOAL
 %token <string> ID
+%token INCLUDE
 %token LEFT_ARRAY
 %token LEFT_PAREN
 %token LET
@@ -39,7 +47,7 @@ open Printf
 %token TACTIC_KEYWORD
 
 (* Start nonterminals. *)
-%start <Ast.env> file
+%start <Ast.expr Ast.Env.t> file
 %start <Ast.expr> expr
 %%
 
@@ -48,12 +56,35 @@ file:
     ;
 
 stmts:
-    | list(stmt)
-    { List.fold_left (
-        fun env (name, expr) -> Ast.Env.add name expr env
-      ) Ast.Env.empty $1
+    | (* none *) { Ast.Env.empty }
+    | stmts INCLUDE STRING
+    {
+      let env = $1 in
+      let filename = Ast.substitute env $loc $3 in
+      let rec find_on_include_path =
+        function
+        | [] -> filename
+        | inc :: incs ->
+           let path = inc // filename in
+           if Sys.file_exists path then path
+           else find_on_include_path incs
+      in
+      let filename =
+        if Filename.is_implicit filename then
+          find_on_include_path Cmdline.includes
+        else filename in
+      let fp = open_in filename in
+      let lexbuf = Lexing.from_channel fp in
+      lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
+      let reader =
+        match !lexer_read with None -> assert false | Some r -> r in
+      let env' = file reader lexbuf in
+      close_in fp;
+      Ast.Env.merge env env'
     }
+    | stmts stmt  { let name, expr = $2 in Ast.Env.add name expr $1 }
     ;
+
 stmt:
     | option(goal_stmt) patterns COLON barelist option(CODE)
     { let name, params =

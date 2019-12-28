@@ -82,3 +82,6 @@ let trimr ?(test = isspace) str =
 
 let trim ?(test = isspace) str =
   trimr ~test (triml ~test str)
+
+let absolute_path path =
+  if not (Filename.is_relative path) then path else Sys.getcwd () // path

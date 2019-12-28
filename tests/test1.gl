@@ -1,14 +1,13 @@
 # Test.
 
+include "url.gl"
+
+let foo = "bar"
+
 goal all = : "file1.o", *file("file2.o")
 
 goal compile (name) =
 "%name.o" : "%name.c" {
   echo %< "->" %@
   touch %@
-}
-
-tactic *file (filename) = {
-    test -f %filename || exit 99
-    # XXX older than %<
 }
