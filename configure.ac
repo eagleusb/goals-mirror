@@ -49,12 +49,15 @@ AC_CHECK_PROG(MENHIR, [menhir], [menhir], [
     AC_MSG_ERROR([OCaml menhir parser generator is required])
 ])
 
+dnl Substitute OCaml flags and packages.
+AC_SUBST([OCAMLFLAGS], ["-g -safe-string -warn-error CDEFLMPSUVYZX+52-3"])
+AC_SUBST([OCAMLPACKAGES], ["-package str,unix"])
+
 dnl Produce output files.
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([run], [chmod +x,-w run])
 AC_CONFIG_FILES([Goalfile Makefile
-                 src/Goalfile src/Makefile
                  src/config.ml])
 
 AC_OUTPUT

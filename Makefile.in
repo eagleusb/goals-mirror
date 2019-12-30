@@ -1,4 +1,4 @@
-# Goalfile parser
+# Goals
 # Copyright (C) 2019 Richard W.M. Jones
 # Copyright (C) 2019 Red Hat Inc.
 #
@@ -16,11 +16,37 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-SUBDIRS = src tests
+# Pass through normal targets to Goalfile.in
 
-all clean depend install:
-	$(MAKE) -C src $@
+# XXX Why can't this parse "all" instead of "all ()"?
+all clean install: src/goals
+	./run src/goals -d "$@ ()"
 
+# If src/goals doesn't exist then brute-force build it.  Once we have
+# src/goals we can rebuild it and other parts of the project using
+# goals itself (see Goalfile.in).
+
+MENHIR = @MENHIR@
+OCAMLFIND = @OCAMLFIND@
+OCAMLLEX = @OCAMLLEX@
+OCAMLFLAGS = @OCAMLFLAGS@
+OCAMLPACKAGES = @OCAMLPACKAGES@
+
+src/goals:
+	$(MENHIR) --explain src/parser.mly
+# Hack required to get includes working.
+	echo 'val lexer_read : (Lexing.lexbuf -> token) option ref' \
+	    >> src/parser.mli
+	$(OCAMLLEX) src/lexer.mll
+	$(OCAMLFIND) opt $(OCAMLFLAGS) $(OCAMLPACKAGES) -I src \
+	    src/config.mli src/utils.mli src/cmdline.mli src/ast.mli \
+	    src/eval.mli src/parser.mli src/lexer.mli src/parse.mli \
+	    src/config.ml src/utils.ml src/cmdline.ml src/ast.ml \
+	    src/eval.ml src/parser.ml src/lexer.ml src/parse.ml \
+	    src/main.ml \
+	    -linkpkg -o $@
+
+# These rules are required by autoconf.
 config.h: stamp-h
 stamp-h: config.h.in config.status
 	./config.status config.h

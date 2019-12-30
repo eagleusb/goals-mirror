@@ -1,4 +1,4 @@
-# Goalfile parser
+# Goalfile
 # Copyright (C) 2019 Richard W.M. Jones
 # Copyright (C) 2019 Red Hat Inc.
 #
@@ -16,3 +16,75 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+include "ocaml.gl"
+
+let MENHIR = "@MENHIR@"
+let OCAMLDEP = "@OCAMLDEP@"
+let OCAMLFIND = "@OCAMLFIND@"
+let OCAMLLEX = "@OCAMLLEX@"
+# XXX
+let OCAMLFLAGS = [ "-g", "-safe-string", "-warn-error", "CDEFLMPSUVYZX+52-3" ]
+let OCAMLPACKAGES = [ "-package", "str,unix", "-I", "src" ]
+#let OCAMLFLAGS = "@OCAMLFLAGS@"
+#let OCAMLPACKAGES = "@OCAMLPACKAGES@"
+
+let objects = [
+    "src/config.cmx",
+    "src/utils.cmx",
+    "src/cmdline.cmx",
+    "src/ast.cmx",
+    "src/eval.cmx",
+    "src/parser.cmx",
+    "src/lexer.cmx",
+    "src/parse.cmx",
+    "src/main.cmx"
+]
+
+goal all = : ocaml_link ("src/goals", objects)
+
+goal clean = {
+    for d in `find -type d`; do
+        pushd $d
+        rm -f *~
+        rm -f *.cmi *.cmo *.cmx *.o
+    done
+    rm -f src/parser.ml src/parser.mli src/lexer.ml src/parser.conflicts
+
+    # We don't delete src/goals because it is required to do builds.
+    # If you want to really delete it, use the maintainer-clean rule.
+}
+
+goal maintainer-clean = : clean {
+    rm -f src/goals
+}
+
+"src/parser.mli", "src/parser.ml" : "src/parser.mly" {
+    %MENHIR --explain %<
+}
+
+"src/lexer.ml" : "src/lexer.mll" {
+    %OCAMLLEX %<
+}
+
+# XXX Depends on *.ml *.mli, but we don't have a function for this yet.
+# XXX Goalfile itself depends on this and we should probably have a
+# way to reevaluate it.
+# XXX Atomic output.
+# XXX GNU sed: https://unix.stackexchange.com/a/13704
+"src/.depend" : {
+    rm -f %@ %@-t
+    # Like many existing tools, ocamldep produces make-compatible
+    # output which doesn't work directly in goals.
+    %OCAMLDEP src/*.ml src/*.mli |
+        sed ':x; /\\$/ { N; s/\\\n//; tx }' |
+        sed 's,[./[:alnum:]]\+,"&",g' > %@-t
+    mv %@-t %@
+}
+
+-include "src/.depend"
+
+# XXX The Goalfile itself needs rules to rebuild it.
+#Makefile: Makefile.in ../config.status
+#        ../config.status $@
+#config.ml: config.ml.in ../config.status
+#        ../config.status $@
