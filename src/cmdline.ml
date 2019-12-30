@@ -72,7 +72,7 @@ let input_file, directory, includes, use_prelude, anon_vars, targets =
                    "dir Add include directory";
     "--no-prelude",Arg.Clear use_prelude,
                    " Do not automatically use prelude.gl from stdlib";
-    "-V",          Arg.Unit print_version,
+    "-v",          Arg.Unit print_version,
                    " Print version and exit";
     "--version",   Arg.Unit print_version,
                    " Print version and exit";
