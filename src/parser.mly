@@ -26,6 +26,33 @@ open Printf
  * by include files.
  *)
 let lexer_read = ref None
+
+let find_on_include_path filename =
+  if not (Filename.is_implicit filename) then filename
+  else (
+    let rec loop = function
+      | [] -> filename
+      | inc :: incs ->
+         let path = inc // filename in
+         if Sys.file_exists path then path else loop incs
+    in
+    loop Cmdline.includes
+  )
+
+let do_include env loc filename optflag file =
+  let filename = Ast.substitute env loc filename in
+  let filename = find_on_include_path filename in
+  if optflag && not (Sys.file_exists filename) then env
+  else (
+    let fp = open_in filename in
+    let lexbuf = Lexing.from_channel fp in
+    lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
+    let reader =
+      match !lexer_read with None -> assert false | Some r -> r in
+    let env' = file reader lexbuf in
+    close_in fp;
+    Ast.Env.merge env env'
+  )
 %}
 
 (* Tokens. *)
@@ -40,6 +67,7 @@ let lexer_read = ref None
 %token LEFT_ARRAY
 %token LEFT_PAREN
 %token LET
+%token OPTINCLUDE
 %token RIGHT_ARRAY
 %token RIGHT_PAREN
 %token <Ast.substs> STRING
@@ -58,30 +86,9 @@ file:
 stmts:
     | (* none *) { Ast.Env.empty }
     | stmts INCLUDE STRING
-    {
-      let env = $1 in
-      let filename = Ast.substitute env $loc $3 in
-      let rec find_on_include_path =
-        function
-        | [] -> filename
-        | inc :: incs ->
-           let path = inc // filename in
-           if Sys.file_exists path then path
-           else find_on_include_path incs
-      in
-      let filename =
-        if Filename.is_implicit filename then
-          find_on_include_path Cmdline.includes
-        else filename in
-      let fp = open_in filename in
-      let lexbuf = Lexing.from_channel fp in
-      lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
-      let reader =
-        match !lexer_read with None -> assert false | Some r -> r in
-      let env' = file reader lexbuf in
-      close_in fp;
-      Ast.Env.merge env env'
-    }
+    { do_include $1 $loc $3 false file }
+    | stmts OPTINCLUDE STRING
+    { do_include $1 $loc $3 true file }
     | stmts stmt  { let name, expr = $2 in Ast.Env.add name expr $1 }
     ;
 

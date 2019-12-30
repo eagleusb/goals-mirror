@@ -54,6 +54,7 @@ rule read =
     | "tactic" { TACTIC_KEYWORD }
     | "let"   { LET }
     | "include" { INCLUDE }
+    | "-include" { OPTINCLUDE }
     | "*" id  { (* NB: The initial '*' is part of the name. *)
                 TACTIC (Lexing.lexeme lexbuf) }
     | id      { ID (Lexing.lexeme lexbuf) }
