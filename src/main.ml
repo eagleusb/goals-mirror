@@ -49,7 +49,8 @@ let main () =
     if targets <> [] then targets
     else [Ast.ECallGoal (Ast.noloc, "all", [])] in
 
-  Ast.print_env stderr env;
+  if Cmdline.debug_flag then
+    Ast.print_env stderr env;
 
   (* Evaluate the target expressions in turn. *)
   Eval.evaluate_targets env targets

@@ -27,6 +27,13 @@ val input_file : string
 (** Get the name of the input Goalfile.
     This is an absolute path. *)
 
+val debug : ('a, unit, string, unit) format4 -> 'a
+(** If debugging is enabled (-d option) then print the formatted
+    output.  If debugging was not enabled then nothing is printed. *)
+
+val debug_flag : bool
+(** If debugging is enabled. *)
+
 val directory : string
 (** Get the name of working directory (-C option). *)
 

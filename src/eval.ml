@@ -59,6 +59,9 @@ and evaluate_target env = function
 
 (* Run a goal by name. *)
 and run_goal env loc name args (params, patterns, deps, code) =
+  Cmdline.debug "%a: running goal %s %a"
+    Ast.string_loc loc name Ast.string_expr (Ast.EList (Ast.noloc, args));
+
   (* Create a new environment which maps the parameter names to
    * the args.
    *)
@@ -118,6 +121,9 @@ and run_goal env loc name args (params, patterns, deps, code) =
 
 (* Return whether the target (pattern) needs to be rebuilt. *)
 and needs_rebuild env loc deps pattern =
+  Cmdline.debug "%a: testing if %a needs rebuild"
+    Ast.string_loc loc Ast.string_pattern pattern;
+
   match pattern with
   | Ast.PTactic (loc, tactic, targs) ->
      (* Look up the tactic. *)
@@ -163,6 +169,8 @@ and needs_rebuild env loc deps pattern =
  * cargs is a list of parameters (all constants).
  *)
 and run_tactic env loc tactic cargs =
+  Cmdline.debug "%a: running tactic %s" Ast.string_loc loc tactic;
+
   (* Find all goals in the environment.  Returns a list of (name, goal). *)
   let goals =
     let env = Ast.Env.bindings env in

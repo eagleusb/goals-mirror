@@ -49,8 +49,10 @@ let () =
     failwithf "%s: cannot find the standard library directory, expected %s.  If the standard library directory is in a non-standard location then set GOALS_DATADIR.  If you can trying to run goals from the build directory then use ‘./run goals ...’"
       Sys.executable_name stdlibdir
 
-let input_file, directory, includes, use_prelude, anon_vars, targets =
+let input_file,
+    debug_flag, directory, includes, use_prelude, anon_vars, targets =
   let args = ref [] in
+  let debug_flag = ref false in
   let directory = ref "." in
   let input_file = ref "Goalfile" in
   let includes = ref [stdlibdir] in
@@ -60,6 +62,8 @@ let input_file, directory, includes, use_prelude, anon_vars, targets =
   let argspec = [
     "-C",          Arg.Set_string directory,
                    "directory Change to directory before running";
+    "-d",          Arg.Set debug_flag,
+                   " Print debug information.";
     "--directory", Arg.Set_string directory,
                    "directory Change to directory before running";
     "-f",          Arg.Set_string input_file,
@@ -82,6 +86,7 @@ let input_file, directory, includes, use_prelude, anon_vars, targets =
   Arg.parse argspec anon_fun usage;
 
   let args = List.rev !args in
+  let debug_flag = !debug_flag in
   let directory = !directory in
   let input_file = absolute_path !input_file in
   (* Don't reverse includes - we want newer -I options to take precedence. *)
@@ -102,4 +107,10 @@ let input_file, directory, includes, use_prelude, anon_vars, targets =
         (name, expr)
     ) anon_vars in
 
-  input_file, directory, includes, use_prelude, anon_vars, targets
+  input_file,
+  debug_flag, directory, includes, use_prelude, anon_vars, targets
+
+(* Create the debug function. *)
+let debug fs =
+  let display str = if debug_flag then prerr_endline str in
+  ksprintf display fs
