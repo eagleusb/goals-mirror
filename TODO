@@ -1,6 +1,12 @@
-'let :=' for immediate evaluation in assignment.
+'let :=' for immediate evaluation in assignment.  Does this work
+for included files?
 
 Default parameters, ie:
   goal foo (name, release = true) = ...
 You might only allow defaults to be added to the end, or you
 might allow goals to be called with labelled parameters.
+
+Functions, eg. wildcard("*.c").  These should be defined as shell
+scripts with a selection of common functions defined in stdlib.
+
+Allow "-" character in identifiers, so eg. "goal maintainer-clean" works.
