@@ -54,6 +54,7 @@ let parse_expr lexbuf =
 
 (* This is used to parse the Goalfile. *)
 let parse_goalfile env filename =
+  Cmdline.debug "parse file: %s" filename;
   let fp = open_in filename in
   let lexbuf = Lexing.from_channel fp in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
@@ -63,6 +64,7 @@ let parse_goalfile env filename =
 
 (* This is used to parse dependency expressions on the command line. *)
 let parse_cli_expr str =
+  Cmdline.debug "parsing from command line: %S" str;
   let lexbuf = Lexing.from_string str in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "<command line>" };
   parse_expr lexbuf
