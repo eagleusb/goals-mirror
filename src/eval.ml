@@ -40,10 +40,20 @@ and evaluate_target env = function
      let args = List.map (Ast.to_constant env) args in
      run_tactic env loc name args
 
-  (* Look up the variable and substitute it. *)
+  (* If this is a goal then it's the same as calling goal().  If not
+   * then look up the variable and substitute it.
+   *)
   | Ast.EVar (loc, name) ->
      let expr = Ast.getvar env loc name in
-     evaluate_target env expr
+     (match expr with
+      | EGoal (loc, ([], _, _, _)) ->
+         evaluate_target env (Ast.ECallGoal (loc, name, []))
+      | EGoal _ ->
+         failwithf "%a: cannot call %s() since this goal has parameters"
+           Ast.string_loc loc name
+      | _ ->
+         evaluate_target env expr
+     )
 
   (* Lists are inlined when found as a target. *)
   | Ast.EList (loc, exprs) ->
