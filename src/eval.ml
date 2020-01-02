@@ -72,6 +72,23 @@ and run_goal env loc name args (params, patterns, deps, code) =
   Cmdline.debug "%a: running goal %s %a"
     Ast.string_loc loc name Ast.string_expr (Ast.EList (Ast.noloc, args));
 
+  (* Expand any variables in the args first. *)
+  let rec expand = function
+  | Ast.EVar (loc, name) ->
+     let expr = Ast.getvar env loc name in
+     expand expr
+  | Ast.ETacticConstructor (loc, name, exprs) ->
+     Ast.ETacticConstructor (loc, name, List.map expand exprs)
+  | Ast.EList (loc, exprs) ->
+     Ast.EList (loc, List.map expand exprs)
+  | Ast.EGoalDefn _
+  | Ast.ETacticDefn _
+  | Ast.ECallGoal _
+  | Ast.ESubsts _
+  | Ast.EConstant _ as e -> e
+  in
+  let args = List.map expand args in
+
   (* Create a new environment which maps the parameter names to
    * the args.
    *)
