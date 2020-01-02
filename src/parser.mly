@@ -99,16 +99,16 @@ stmt:
         | None ->
            sprintf "_goal@%d" $startpos.pos_lnum, []
         | Some x -> x in
-      name, Ast.EGoal ($loc, (params, $2, $4, $5))
+      name, Ast.EGoalDefn ($loc, (params, $2, $4, $5))
     }
     | goal_stmt CODE
     {
       let name, params = $1 in
-      name, Ast.EGoal ($loc, (params, [], [], Some $2))
+      name, Ast.EGoalDefn ($loc, (params, [], [], Some $2))
     }
     | TACTIC_KEYWORD TACTIC params_decl EQUALS CODE
     {
-      $2, Ast.ETactic ($loc, ($3, $5))
+      $2, Ast.ETacticDefn ($loc, ($3, $5))
     }
     | LET ID EQUALS expr { $2, $4 }
     ;

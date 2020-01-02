@@ -45,9 +45,9 @@ and pattern =
   | PTactic of loc * id * substs list
 and expr =
   (** goal (params) = patterns : exprs code *)
-  | EGoal of loc * goal
+  | EGoalDefn of loc * goal
   (** tactic (params) = code *)
-  | ETactic of loc * tactic
+  | ETacticDefn of loc * tactic
   (** call goalname (params) etc. *)
   | ECallGoal of loc * id * expr list
   (** call *tactic (params) etc. *)

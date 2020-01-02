@@ -42,8 +42,8 @@ type env = expr Env.t
 and pattern =
   | PTactic of loc * id * substs list
 and expr =
-  | EGoal of loc * goal
-  | ETactic of loc * tactic
+  | EGoalDefn of loc * goal
+  | ETacticDefn of loc * tactic
   | ECallGoal of loc * id * expr list
   | ECallTactic of loc * id * expr list
   | EVar of loc * id
@@ -74,7 +74,7 @@ let getgoal env loc name =
       failwithf "%a: goal ‘%s’ not found" string_loc loc name in
   let goal =
     match expr with
-    | EGoal (loc, goal) -> goal
+    | EGoalDefn (loc, goal) -> goal
     | _ ->
        failwithf "%a: tried to call ‘%s’ which is not a goal"
          string_loc loc name in
@@ -88,7 +88,7 @@ let gettactic env loc name =
       failwithf "%a: tactic ‘%s’ not found" string_loc loc name in
   let tactic =
     match expr with
-    | ETactic (loc, tactic) -> tactic
+    | ETacticDefn (loc, tactic) -> tactic
     | _ ->
        failwithf "%a: tried to call ‘%s’ which is not a tactic"
          string_loc loc name in
@@ -116,11 +116,11 @@ let rec to_constant env = function
      failwithf "%a: cannot use tactic ‘%s’ in constant expression"
        string_loc loc name
 
-  | EGoal (loc, _) ->
+  | EGoalDefn (loc, _) ->
      failwithf "%a: cannot use goal in constant expression"
        string_loc loc
 
-  | ETactic (loc, _) ->
+  | ETacticDefn (loc, _) ->
      failwithf "%a: cannot use tactic in constant expression"
        string_loc loc
 
@@ -171,11 +171,11 @@ and expr_to_shell_string env = function
   | ECallTactic (loc, _, []) -> Filename.quote ""
   | ECallTactic (loc, _, (arg :: _)) -> expr_to_shell_string env arg
 
-  | EGoal (loc, _) ->
+  | EGoalDefn (loc, _) ->
      failwithf "%a: cannot use goal in shell expansion"
        string_loc loc
 
-  | ETactic (loc, _) ->
+  | ETacticDefn (loc, _) ->
      failwithf "%a: cannot use tactic in shell expansion"
        string_loc loc
 
@@ -218,8 +218,8 @@ and print_env fp env = output_string fp (string_env () env)
 
 and string_def () (name, expr) =
   match expr with
-  | EGoal (loc, goal) -> string_goal () (Some name, goal) ^ "\n"
-  | ETactic (loc, tactic) -> string_tactic () (Some name, tactic) ^ "\n"
+  | EGoalDefn (loc, goal) -> string_goal () (Some name, goal) ^ "\n"
+  | ETacticDefn (loc, tactic) -> string_tactic () (Some name, tactic) ^ "\n"
   | expr -> sprintf "let %s = %a\n" name string_expr expr;
 
 and print_def fp name expr = output_string fp (string_def () (name, expr))
@@ -247,8 +247,8 @@ and string_pattern () = function
 and print_pattern fp p = output_string fp (string_pattern () p)
 
 and string_expr () = function
-  | EGoal (loc, goal) -> string_goal () (None, goal)
-  | ETactic (loc, goal) -> string_tactic () (None, goal)
+  | EGoalDefn (loc, goal) -> string_goal () (None, goal)
+  | ETacticDefn (loc, goal) -> string_tactic () (None, goal)
   | ECallGoal (loc, name, params) ->
      sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))

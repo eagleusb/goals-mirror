@@ -25,7 +25,7 @@ let rec evaluate_targets env exprs =
   List.iter (evaluate_target env) exprs
 
 and evaluate_target env = function
-  | Ast.EGoal _ | Ast.ETactic _ -> assert false
+  | Ast.EGoalDefn _ | Ast.ETacticDefn _ -> assert false
 
   (* Call a goal. *)
   | Ast.ECallGoal (loc, name, args) ->
@@ -46,9 +46,9 @@ and evaluate_target env = function
   | Ast.EVar (loc, name) ->
      let expr = Ast.getvar env loc name in
      (match expr with
-      | EGoal (loc, ([], _, _, _)) ->
+      | EGoalDefn (loc, ([], _, _, _)) ->
          evaluate_target env (Ast.ECallGoal (loc, name, []))
-      | EGoal _ ->
+      | EGoalDefn _ ->
          failwithf "%a: cannot call %s() since this goal has parameters"
            Ast.string_loc loc name
       | _ ->
@@ -186,7 +186,7 @@ and run_tactic env loc tactic cargs =
     let env = Ast.Env.bindings env in
     filter_map
       (function
-       | name, Ast.EGoal (loc, goal) -> Some (name, goal)
+       | name, Ast.EGoalDefn (loc, goal) -> Some (name, goal)
        | _ -> None) env in
 
   (* Find all patterns.  Returns a list of (pattern, name, goal). *)
