@@ -45,7 +45,7 @@ and expr =
   | EGoalDefn of loc * goal
   | ETacticDefn of loc * tactic
   | ECallGoal of loc * id * expr list
-  | ECallTactic of loc * id * expr list
+  | ETacticConstructor of loc * id * expr list
   | EVar of loc * id
   | EList of loc * expr list
   | ESubsts of loc * substs
@@ -112,7 +112,7 @@ let rec to_constant env = function
      failwithf "%a: cannot use goal ‘%s’ in constant expression"
        string_loc loc name
 
-  | ECallTactic (loc, name, _) ->
+  | ETacticConstructor (loc, name, _) ->
      failwithf "%a: cannot use tactic ‘%s’ in constant expression"
        string_loc loc name
 
@@ -168,8 +168,8 @@ and expr_to_shell_string env = function
        string_loc loc name
 
   (* Tactics expand to the first parameter. *)
-  | ECallTactic (loc, _, []) -> Filename.quote ""
-  | ECallTactic (loc, _, (arg :: _)) -> expr_to_shell_string env arg
+  | ETacticConstructor (loc, _, []) -> Filename.quote ""
+  | ETacticConstructor (loc, _, (arg :: _)) -> expr_to_shell_string env arg
 
   | EGoalDefn (loc, _) ->
      failwithf "%a: cannot use goal in shell expansion"
@@ -252,7 +252,7 @@ and string_expr () = function
   | ECallGoal (loc, name, params) ->
      sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))
-  | ECallTactic (loc, name, params) ->
+  | ETacticConstructor (loc, name, params) ->
      sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))
   | EVar (loc, var) -> var

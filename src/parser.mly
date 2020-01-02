@@ -140,7 +140,7 @@ pattern_param:
 expr:
     | ID params  { Ast.ECallGoal ($loc, $1, $2) }
     | ID         { Ast.EVar ($loc, $1) }
-    | TACTIC params { Ast.ECallTactic ($loc, $1, $2) }
+    | TACTIC params { Ast.ETacticConstructor ($loc, $1, $2) }
     | STRING     { Ast.ESubsts ($loc, $1) }
     | LEFT_ARRAY barelist RIGHT_ARRAY { Ast.EList ($loc, $2) }
     ;

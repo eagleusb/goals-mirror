@@ -33,7 +33,7 @@ and evaluate_target env = function
      run_goal env loc name args goal
 
   (* Call a tactic. *)
-  | Ast.ECallTactic (loc, name, args) ->
+  | Ast.ETacticConstructor (loc, name, args) ->
      (* All parameters of tactics must be simple constant expressions
       * (strings, in future booleans, numbers, etc).
       *)
@@ -98,7 +98,7 @@ and run_goal env loc name args (params, patterns, deps, code) =
         let expr_of_substs s = Ast.ESubsts (Ast.noloc, s) in
         let expr_of_pattern = function
           | Ast.PTactic (loc, tactic, targs) ->
-             Ast.ECallTactic (loc, tactic, List.map expr_of_substs targs)
+             Ast.ETacticConstructor (loc, tactic, List.map expr_of_substs targs)
         in
         let pexprs = List.map expr_of_pattern patterns in
         let env = Ast.Env.add "@" (Ast.EList (Ast.noloc, pexprs)) env in
@@ -218,7 +218,7 @@ and run_tactic env loc tactic cargs =
      let targs = List.map (function Ast.CString s -> [Ast.SString s]) cargs in
      let p = Ast.PTactic (loc, tactic, targs) in
      if needs_rebuild env loc [] p then (
-       let t = Ast.ECallTactic (loc, tactic,
+       let t = Ast.ETacticConstructor (loc, tactic,
                                 List.map (fun c -> Ast.EConstant (loc, c))
                                   cargs) in
        failwithf "%a: don't know how to build %a"
