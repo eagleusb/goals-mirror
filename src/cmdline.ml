@@ -23,7 +23,7 @@ open Utils
 
 (* See also "let id" in [lexer.mll]. *)
 let var_regexp =
-  Str.regexp "\\([a-zA-Z_][a-zA-Z0-9_]*\\)[ \t]*=[ \t]*\\(.*\\)"
+  Str.regexp "\\([a-zA-Z_][-a-zA-Z0-9_]*\\)[ \t]*=[ \t]*\\(.*\\)"
 
 let usage =
   "\
