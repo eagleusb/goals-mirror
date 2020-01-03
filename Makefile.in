@@ -40,9 +40,11 @@ src/goals:
 	$(OCAMLLEX) src/lexer.mll
 	$(OCAMLFIND) opt $(OCAMLFLAGS) $(OCAMLPACKAGES) -I src \
 	    src/config.mli src/utils.mli src/cmdline.mli src/ast.mli \
-	    src/eval.mli src/parser.mli src/lexer.mli src/parse.mli \
+	    src/eval.mli src/run.mli src/parser.mli src/lexer.mli \
+	    src/parse.mli \
 	    src/config.ml src/utils.ml src/cmdline.ml src/ast.ml \
-	    src/eval.ml src/parser.ml src/lexer.ml src/parse.ml \
+	    src/eval.ml src/run.ml src/parser.ml src/lexer.ml \
+	    src/parse.ml \
 	    src/main.ml \
 	    -linkpkg -o $@
 

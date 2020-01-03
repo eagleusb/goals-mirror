@@ -52,8 +52,8 @@ let main () =
   if Cmdline.debug_flag then
     Ast.print_env stderr env;
 
-  (* Evaluate the target expressions in turn. *)
-  Eval.evaluate_targets env targets
+  (* Run the target expressions. *)
+  Run.run_targets env targets
 
 let () =
   try main ()
