@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # This file is included first and automatically in all Goalfiles
-# (unless you use --no-prelude).  It contains standard goals and
+# (unless you use --no-prelude).  It contains standard functions and
 # tactics.
 
 # The only tactic that ‘make’ has.
@@ -35,4 +35,15 @@ tactic *file (filename) = {
 # rebuild if the file is missing, but not if it is older.
 tactic *exists (filename) = {
     test -f %filename || exit 99
+}
+
+# Expand a wildcard into a list of filenames.
+function wildcard (wc) = {
+    shopt -s nullglob
+    # Note that the substitution is quoted by goals, so to expand
+    # it we must assign it to a variable and then use it unquoted.
+    wc=%wc
+    for f in $wc; do
+        echo "$f"
+    done
 }

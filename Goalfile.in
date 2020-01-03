@@ -73,15 +73,15 @@ goal maintainer-clean = : clean {
     %OCAMLLEX %<
 }
 
-# XXX Depends on *.ml *.mli, but we don't have a function for this yet.
 # XXX Goalfile itself depends on this and we should probably have a
 # way to reevaluate it.
 # XXX Atomic output.
-goal depend () = "src/.depend" : {
+goal depend () =
+"src/.depend" : wildcard ("src/*.ml"), wildcard ("src/*.mli") {
     rm -f %@ %@-t
     # Like many existing tools, ocamldep produces make-compatible
     # output which doesn't work directly in goals.
-    %OCAMLDEP -all -one-line src/*.ml src/*.mli |
+    %OCAMLDEP -all -one-line %< |
         sed 's|[./[:alnum:]]\+|"&"|g' |
         sed 's|" "|", "|g' |
         sed 's|.*|& ;|' > %@-t
