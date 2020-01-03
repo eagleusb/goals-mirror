@@ -40,7 +40,7 @@ let find_on_include_path filename =
   )
 
 let do_include env loc filename optflag file =
-  let filename = Ast.substitute env loc filename in
+  let filename = Eval.substitute env loc filename in
   let filename = find_on_include_path filename in
   if optflag && not (Sys.file_exists filename) then env
   else (

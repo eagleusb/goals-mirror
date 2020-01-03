@@ -161,7 +161,7 @@ and needs_rebuild env loc deps extra_deps pattern =
       * should be called with env containing the goal params, this
       * should substitute any parameters in the tactic arguments.
       *)
-     let targs = List.map (Ast.substitute env loc) targs in
+     let targs = List.map (Eval.substitute env loc) targs in
      let targs =
        List.map (fun targ ->
            Ast.EConstant (Ast.noloc, Ast.CString targ)) targs in

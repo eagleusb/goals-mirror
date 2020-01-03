@@ -87,22 +87,6 @@ val getgoal : env -> loc -> id -> goal
     found or if the named variable is not a tactic. *)
 val gettactic : env -> loc -> id -> tactic
 
-(** Take any expression and simplify it down to a constant.
-    If the expression cannot be simplified then this raises
-    [Failure _]. *)
-val to_constant : env -> expr -> constant
-
-(** Take a substitution list and try to turn it into a simple
-    string by evaluating every variable.  If not possible this
-    raises [Failure _]. *)
-val substitute : env -> loc -> substs -> string
-
-(** Similar to {!substitute} except this is used where we will
-    pass the result immediately to the shell to execute.  Variables
-    are substituted with shell quoted strings.  Raises [Failure _]
-    on error. *)
-val to_shell_script : env -> loc -> substs -> string
-
 (** This is used for incrementally building Ast.substs in the parser. *)
 module Substs : sig
   type t

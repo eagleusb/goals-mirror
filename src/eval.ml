@@ -110,7 +110,7 @@ let rec evaluate_goal_arg env = function
      evaluate_goal_arg env expr
 
   | ESubsts (loc, str) ->
-     let str = Ast.substitute env loc str in
+     let str = substitute env loc str in
      Ast.EConstant (loc, Ast.CString str)
 
   | EList (loc, exprs) ->
