@@ -113,9 +113,8 @@ module Substs : sig
   val add_var : t -> string -> unit
 end
 
-(** Print all definitions in an environment. *)
-val print_env : out_channel -> env -> unit
-
 (** %a formatters. *)
+val print_env : out_channel -> env -> unit
 val string_pattern : unit -> pattern -> string
 val string_expr : unit -> expr -> string
+val print_expr : out_channel -> expr -> unit

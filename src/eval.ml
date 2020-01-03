@@ -243,9 +243,6 @@ and run_tactic env loc tactic cargs =
     ) patterns in
 
   match patterns with
-  | [_, name, goal, args] ->
-     run_goal env loc name args goal
-
   | [] ->
      (* There's no matching goal, but we don't need one if
       * the tactic doesn't need to be rebuilt.
@@ -260,12 +257,14 @@ and run_tactic env loc tactic cargs =
          Ast.string_loc loc Ast.string_expr t
      )
 
-  | _ ->
-     (* If there are multiple matching goals, then assuming the goals
-      * are different we must pick the one which was defined last in
-      * the file.  However we don't do that right now. XXX
+  | goals ->
+     (* One or more goals match.  We run them all (although if
+      * one of them succeeds in rebuilding, it will cut short the rest).
       *)
-     assert false (* TODO! *)
+     List.iter (
+       fun (_, name, goal, args) ->
+         run_goal env loc name args goal
+     ) goals
 
 (* Test if pattern matches *tactic(cargs).  If it does
  * then we return Some args where args is the arguments that must
