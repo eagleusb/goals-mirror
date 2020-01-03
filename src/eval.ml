@@ -92,8 +92,11 @@ and run_goal env loc name args (params, patterns, deps, code) =
   (* Check all dependencies have been updated. *)
   evaluate_targets env deps;
 
-  (* Check if any target (ie. pattern) needs to be rebuilt. *)
-  let rebuild = List.exists (needs_rebuild env loc deps) patterns in
+  (* Check if any target (ie. pattern) needs to be rebuilt.
+   * As with make, a goal with no targets is always run.
+   *)
+  let rebuild =
+    patterns = [] || List.exists (needs_rebuild env loc deps) patterns in
 
   if rebuild then (
     (* Run the code (if any). *)
