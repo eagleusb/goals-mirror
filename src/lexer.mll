@@ -52,10 +52,15 @@ rule read =
     | '"'     { read_string (Ast.Substs.create ()) lexbuf }
     | "{"     { read_code (Ast.Substs.create ()) (ref 1) lexbuf }
     | "goal"  { GOAL }
-    | "tactic" { TACTIC_KEYWORD }
+    | "tactic"
+              { TACTIC_KEYWORD }
+    | "function"
+              { FUNCTION }
     | "let"   { LET }
-    | "include" { INCLUDE }
-    | "-include" { OPTINCLUDE }
+    | "include"
+              { INCLUDE }
+    | "-include"
+              { OPTINCLUDE }
     | "*" id  { (* NB: The initial '*' is part of the name. *)
                 TACTIC (Lexing.lexeme lexbuf) }
     | id      { ID (Lexing.lexeme lexbuf) }

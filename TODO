@@ -6,7 +6,8 @@ Default parameters, ie:
 You might only allow defaults to be added to the end, or you
 might allow goals to be called with labelled parameters.
 
-Functions, eg. wildcard("*.c").  These should be defined as shell
-scripts with a selection of common functions defined in stdlib.
-
 Fix: You must use 'all ()' on the command line.
+
+"Quiet" code.  Generally {CODE} sections in user files should be
+echos, and those in stdlib should run silently (except if debugging).
+Maybe we should have a quiet keyword to indicate this?

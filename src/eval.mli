@@ -36,3 +36,7 @@ val to_shell_script : Ast.env -> Ast.loc -> Ast.substs -> string
 (** Evaluate a goal argument.  This substitutes any variables found,
     and recursively calls functions. *)
 val evaluate_goal_arg : Ast.env -> Ast.expr -> Ast.expr
+
+(* Call a function. *)
+val call_function : Ast.env -> Ast.loc -> Ast.id -> Ast.expr list -> Ast.func ->
+                    Ast.expr

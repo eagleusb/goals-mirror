@@ -43,8 +43,9 @@ and pattern =
   | PTactic of loc * id * substs list
 and expr =
   | EGoalDefn of loc * goal
+  | EFuncDefn of loc * func
   | ETacticDefn of loc * tactic
-  | ECallGoal of loc * id * expr list
+  | ECall of loc * id * expr list
   | ETacticCtor of loc * id * expr list
   | EVar of loc * id
   | EList of loc * expr list
@@ -53,6 +54,7 @@ and expr =
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
+and func = param_decl list * code
 and tactic = param_decl list * code
 and param_decl = id
 and id = string
@@ -79,6 +81,19 @@ let getgoal env loc name =
        failwithf "%a: tried to call ‘%s’ which is not a goal"
          string_loc loc name in
   goal
+
+let getfunc env loc name =
+  let expr =
+    try Env.find name env
+    with Not_found ->
+      failwithf "%a: func ‘%s’ not found" string_loc loc name in
+  let func =
+    match expr with
+    | EFuncDefn (loc, func) -> func
+    | _ ->
+       failwithf "%a: tried to call ‘%s’ which is not a function"
+         string_loc loc name in
+  func
 
 let gettactic env loc name =
   assert (name.[0] = '*');
@@ -134,6 +149,7 @@ and print_env fp env = output_string fp (string_env () env)
 and string_def () (name, expr) =
   match expr with
   | EGoalDefn (loc, goal) -> string_goal () (Some name, goal) ^ "\n"
+  | EFuncDefn (loc, func) -> string_func () (Some name, func) ^ "\n"
   | ETacticDefn (loc, tactic) -> string_tactic () (Some name, tactic) ^ "\n"
   | expr -> sprintf "let %s = %a\n" name string_expr expr;
 
@@ -146,6 +162,11 @@ and string_goal () (name, (param_decls, patterns, exprs, code)) =
     (String.concat ", " (List.map (string_pattern ()) patterns))
     (String.concat ", " (List.map (string_expr ()) exprs))
     (match code with None -> "" | Some code -> " = { ... }")
+
+and string_func () (name, (param_decls, code)) =
+  sprintf "function%s (%s) = { ... }"
+    (match name with None -> "" | Some name -> " " ^ name)
+    (String.concat ", " (List.map (string_param_decl ()) param_decls))
 
 and string_tactic () (name, (param_decls, code)) =
   sprintf "tactic%s (%s) = { ... }"
@@ -163,8 +184,9 @@ and print_pattern fp p = output_string fp (string_pattern () p)
 
 and string_expr () = function
   | EGoalDefn (loc, goal) -> string_goal () (None, goal)
+  | EFuncDefn (loc, func) -> string_func () (None, func)
   | ETacticDefn (loc, goal) -> string_tactic () (None, goal)
-  | ECallGoal (loc, name, params) ->
+  | ECall (loc, name, params) ->
      sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))
   | ETacticCtor (loc, name, params) ->

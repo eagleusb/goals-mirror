@@ -61,6 +61,7 @@ let do_include env loc filename optflag file =
 %token COMMA
 %token EQUALS
 %token EOF
+%token FUNCTION
 %token GOAL
 %token <string> ID
 %token INCLUDE
@@ -108,6 +109,10 @@ stmt:
       let name, params = $1 in
       name, Ast.EGoalDefn ($loc, (params, [], [], Some $2))
     }
+    | FUNCTION ID params_decl EQUALS CODE
+    {
+      $2, Ast.EFuncDefn ($loc, ($3, $5))
+    }
     | TACTIC_KEYWORD TACTIC params_decl EQUALS CODE
     {
       $2, Ast.ETacticDefn ($loc, ($3, $5))
@@ -140,7 +145,7 @@ pattern_param:
     ;
 
 expr:
-    | ID params  { Ast.ECallGoal ($loc, $1, $2) }
+    | ID params  { Ast.ECall ($loc, $1, $2) }
     | ID         { Ast.EVar ($loc, $1) }
     | TACTIC params { Ast.ETacticCtor ($loc, $1, $2) }
     | STRING     { Ast.ESubsts ($loc, $1) }

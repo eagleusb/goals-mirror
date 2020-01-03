@@ -17,6 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
+open Printf
+
 open Utils
 
 let rec to_constant env = function
@@ -33,9 +35,23 @@ let rec to_constant env = function
      failwithf "%a: list found where constant expression expected"
        Ast.string_loc loc
 
-  | ECallGoal (loc, name, _) ->
-     failwithf "%a: cannot use goal ‘%s’ in constant expression"
-       Ast.string_loc loc name
+  | ECall (loc, name, args) ->
+     let expr = Ast.getvar env loc name in
+     (match expr with
+      | EGoalDefn _ ->
+         (* Goals don't return anything so they cannot be used in
+          * constant expressions.  Use a function instead.
+          *)
+         failwithf "%a: cannot use goal call ‘%s’ in shell expansion"
+           Ast.string_loc loc name
+
+      | EFuncDefn (loc, func) ->
+         to_constant env (call_function env loc name args func)
+
+      | _ ->
+         failwithf "%a: cannot use ‘%s’ in constant expression"
+           Ast.string_loc loc name
+     )
 
   | ETacticCtor (loc, name, _) ->
      failwithf "%a: cannot use tactic ‘%s’ in constant expression"
@@ -43,6 +59,10 @@ let rec to_constant env = function
 
   | EGoalDefn (loc, _) ->
      failwithf "%a: cannot use goal in constant expression"
+       Ast.string_loc loc
+
+  | EFuncDefn (loc, _) ->
+     failwithf "%a: cannot use function in constant expression"
        Ast.string_loc loc
 
   | ETacticDefn (loc, _) ->
@@ -61,7 +81,7 @@ and substitute env loc substs =
   ) substs;
   Buffer.contents b
 
-let rec to_shell_script env loc substs =
+and to_shell_script env loc substs =
   let b = Buffer.create 13 in
   List.iter (
     function
@@ -88,9 +108,23 @@ and expr_to_shell_string env = function
      (* These are shell quoted so we can just concat them with space. *)
      String.concat " " strs
 
-  | ECallGoal (loc, name, _) ->
-     failwithf "%a: cannot use goal ‘%s’ in shell expansion"
-       Ast.string_loc loc name
+  | ECall (loc, name, args) ->
+     let expr = Ast.getvar env loc name in
+     (match expr with
+      | EGoalDefn _ ->
+         (* Goals don't return anything so they cannot be used in
+          * shell script expansions.  Use a function instead.
+          *)
+         failwithf "%a: cannot use goal call ‘%s’ in shell expansion"
+           Ast.string_loc loc name
+
+      | EFuncDefn (loc, func) ->
+         expr_to_shell_string env (call_function env loc name args func)
+
+      | _ ->
+         failwithf "%a: cannot call ‘%s’ which is not a function"
+           Ast.string_loc loc name
+     )
 
   (* Tactics expand to the first parameter. *)
   | ETacticCtor (loc, _, []) -> Filename.quote ""
@@ -100,11 +134,15 @@ and expr_to_shell_string env = function
      failwithf "%a: cannot use goal in shell expansion"
        Ast.string_loc loc
 
+  | EFuncDefn (loc, _) ->
+     failwithf "%a: cannot use function in shell expansion"
+       Ast.string_loc loc
+
   | ETacticDefn (loc, _) ->
      failwithf "%a: cannot use tactic in shell expansion"
        Ast.string_loc loc
 
-let rec evaluate_goal_arg env = function
+and evaluate_goal_arg env = function
   | Ast.EVar (loc, name) ->
      let expr = Ast.getvar env loc name in
      evaluate_goal_arg env expr
@@ -119,13 +157,80 @@ let rec evaluate_goal_arg env = function
   | ETacticCtor (loc, name, exprs) ->
      Ast.ETacticCtor (loc, name, List.map (evaluate_goal_arg env) exprs)
 
-  | ECallGoal (loc, name, _) ->
-     (* Goals don't return anything so they cannot be used in
-      * goal args.  Use a function instead.
-      *)
-     failwithf "%a: cannot use goal ‘%s’ in goal argument"
-       Ast.string_loc loc name
+  | ECall (loc, name, args) ->
+     let expr = Ast.getvar env loc name in
+     (match expr with
+      | EGoalDefn _ ->
+         (* Goals don't return anything so they cannot be used in
+          * goal args.  Use a function instead.
+          *)
+         failwithf "%a: cannot use goal call ‘%s’ in goal argument"
+           Ast.string_loc loc name
+
+      | EFuncDefn (loc, func) ->
+         call_function env loc name args func
+
+      | _ ->
+         failwithf "%a: cannot call ‘%s’ which is not a function"
+           Ast.string_loc loc name
+     )
 
   | EConstant _
   | EGoalDefn _
+  | EFuncDefn _
   | ETacticDefn _ as e -> e
+
+(* Functions are only called from goal args or when substituting
+ * into a shell script or constant expression (this may change if we
+ * implement ‘:=’ assignment for variables).  This evaluates a
+ * function by running the associated shell script and substituting
+ * the output into an EList.
+ *
+ * XXX In future allow functions to be annotated with a return type.
+ *)
+and call_function env loc name args (params, code) =
+  (* This is used to print the function in debug and error messages only. *)
+  let debug_func =
+    sprintf "%s (%s)" name
+      (String.concat ", " (List.map (Ast.string_expr ()) args)) in
+  Cmdline.debug "%a: running function %s" Ast.string_loc loc debug_func;
+
+  (* Evaluate function args.  Must be done before updating the environment. *)
+  let args = List.map (evaluate_goal_arg env) args in
+
+  (* Create a new environment which maps the parameter names to
+   * the args.
+   *)
+  let env =
+    let params =
+      try List.combine params args
+      with Invalid_argument _ ->
+        failwithf "%a: calling function %s with wrong number of arguments, expecting %d args but got %d args"
+          Ast.string_loc loc debug_func
+          (List.length params) (List.length args) in
+    List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
+
+  (* Run the code. *)
+  let code = to_shell_script env loc code in
+  let code = "set -e\n" (*^ "set -x\n"*) ^ "\n" ^ code in
+
+  let chan = Unix.open_process_in code in
+  let lines = ref [] in
+  (try while true do lines := input_line chan :: !lines done
+   with End_of_file -> ());
+  let lines = List.rev !lines in
+  let st = Unix.close_process_in chan in
+  (match st with
+  | Unix.WEXITED 0 -> ()
+  | Unix.WEXITED i ->
+     eprintf "*** function ‘%s’ failed with exit code %d\n" name i
+  | Unix.WSIGNALED i ->
+     eprintf "*** function ‘%s’ killed by signal %d\n" name i
+  | Unix.WSTOPPED i ->
+     eprintf "*** function ‘%s’ stopped by signal %d\n" name i
+  );
+
+  Ast.EList (Ast.noloc,
+             (List.map (fun line ->
+                  Ast.EConstant (Ast.noloc, Ast.CString line))
+                lines))

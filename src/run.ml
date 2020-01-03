@@ -25,12 +25,21 @@ let rec run_targets env exprs =
   List.iter (run_target env) exprs
 
 and run_target env = function
-  | Ast.EGoalDefn _ | Ast.ETacticDefn _ -> assert false
+  | Ast.EGoalDefn _ | Ast.EFuncDefn _ | Ast.ETacticDefn _ -> assert false
 
-  (* Call a goal. *)
-  | Ast.ECallGoal (loc, name, args) ->
-     let goal = Ast.getgoal env loc name in
-     run_goal env loc name args goal []
+  (* Call a goal or function. *)
+  | Ast.ECall (loc, name, args) ->
+     let expr = Ast.getvar env loc name in
+     (match expr with
+      | Ast.EGoalDefn (_, goal) ->
+         run_goal env loc name args goal []
+      | Ast.EFuncDefn (_, func) ->
+         let expr = Eval.call_function env loc name args func in
+         run_target env expr
+      | _ ->
+         failwithf "%a: tried to call ‘%s’ which is not a goal or a function"
+           Ast.string_loc loc name
+     )
 
   (* Call a tactic. *)
   | Ast.ETacticCtor (loc, name, args) ->
@@ -46,8 +55,8 @@ and run_target env = function
   | Ast.EVar (loc, name) ->
      let expr = Ast.getvar env loc name in
      (match expr with
-      | EGoalDefn (loc, ([], _, _, _)) ->
-         run_target env (Ast.ECallGoal (loc, name, []))
+      | Ast.EGoalDefn (loc, ([], _, _, _)) ->
+         run_target env (Ast.ECall (loc, name, []))
       | EGoalDefn _ ->
          failwithf "%a: cannot call %s() since this goal has parameters"
            Ast.string_loc loc name

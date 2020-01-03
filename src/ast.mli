@@ -46,10 +46,12 @@ and pattern =
 and expr =
   (** goal (params) = patterns : exprs code *)
   | EGoalDefn of loc * goal
+  (** function (params) = code *)
+  | EFuncDefn of loc * func
   (** tactic (params) = code *)
   | ETacticDefn of loc * tactic
-  (** call goalname (params) etc. *)
-  | ECallGoal of loc * id * expr list
+  (** call goal (params) or function (params) *)
+  | ECall of loc * id * expr list
   (** call *tactic (params) etc. *)
   | ETacticCtor of loc * id * expr list
   (** variable, or goal call with no parameters *)
@@ -63,8 +65,9 @@ and expr =
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
+and func = param_decl list * code
 and tactic = param_decl list * code
-  (** Goal/tactic parameter. *)
+  (** Goal/func/tactic parameter. *)
 and param_decl = id
 and id = string
 and code = substs
@@ -82,6 +85,10 @@ val getvar : env -> loc -> id -> expr
 (** Look up a goal in the environment.  Raise [Failure _] if not
     found or if the named variable is not a goal. *)
 val getgoal : env -> loc -> id -> goal
+
+(** Look up a function in the environment.  Raise [Failure _] if not
+    found or if the named variable is not a function. *)
+val getfunc : env -> loc -> id -> func
 
 (** Look up a tactic in the environment.  Raise [Failure _] if not
     found or if the named variable is not a tactic. *)
