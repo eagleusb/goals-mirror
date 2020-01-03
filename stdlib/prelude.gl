@@ -27,7 +27,7 @@ tactic *file (filename) = {
 
     # Otherwise rebuild if it is older than any dependency.
     for f in %<; do
-        test %filename -ot "$f" && exit 99 || exit 0
+        test %filename -ot "$f" && exit 99 ||:
     done
 }
 
