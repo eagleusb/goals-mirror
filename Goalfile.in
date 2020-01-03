@@ -77,7 +77,7 @@ goal maintainer-clean = : clean {
 # XXX Goalfile itself depends on this and we should probably have a
 # way to reevaluate it.
 # XXX Atomic output.
-"src/.depend" : {
+goal depend () = "src/.depend" : {
     rm -f %@ %@-t
     # Like many existing tools, ocamldep produces make-compatible
     # output which doesn't work directly in goals.
