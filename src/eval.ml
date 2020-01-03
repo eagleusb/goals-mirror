@@ -101,7 +101,8 @@ and run_goal env loc name args (params, patterns, deps, code) =
   if rebuild then (
     (* Run the code (if any). *)
     (match code with
-     | None -> ()
+     | None -> () (* No { CODE } section. *)
+
      | Some code ->
         (* Add some standard variables to the environment. *)
         let expr_of_substs s = Ast.ESubsts (Ast.noloc, s) in
@@ -122,20 +123,22 @@ and run_goal env loc name args (params, patterns, deps, code) =
         if r <> 0 then (
           eprintf "*** goal ‘%s’ failed with exit code %d\n" name r;
           exit 1
-        )
-    );
+        );
 
-    (* Check all targets were updated (else it's an error). *)
-    let pattern_still_needs_rebuild =
-      try Some (List.find (needs_rebuild env loc deps) patterns)
-      with Not_found -> None in
-    match pattern_still_needs_rebuild with
-    | None -> ()
-    | Some pattern ->
-       failwithf "%a: goal ‘%s’ ran successfully but it did not rebuild %a"
-         Ast.string_loc loc
-         name
-         Ast.string_pattern pattern
+        (* Check all targets were updated after the code was
+         * run (else it's an error).
+         *)
+        let pattern_still_needs_rebuild =
+          try Some (List.find (needs_rebuild env loc deps) patterns)
+          with Not_found -> None in
+        match pattern_still_needs_rebuild with
+        | None -> ()
+        | Some pattern ->
+           failwithf "%a: goal ‘%s’ ran successfully but it did not rebuild %a"
+             Ast.string_loc loc
+             name
+             Ast.string_pattern pattern
+    )
   )
 
 (* Return whether the target (pattern) needs to be rebuilt. *)
