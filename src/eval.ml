@@ -72,6 +72,12 @@ and run_goal env loc name args (params, patterns, deps, code) =
   Cmdline.debug "%a: running goal %s %a"
     Ast.string_loc loc name Ast.string_expr (Ast.EList (Ast.noloc, args));
 
+  (* This is the point where we evaluate the goal arguments.  We must
+   * do this before creating the new environment, because variables
+   * appearing in goal arguments don't refer to goal parameters.
+   *)
+  let args = List.map (evaluate_goal_arg env) args in
+
   (* Create a new environment which maps the parameter names to
    * the args.
    *)
@@ -174,6 +180,35 @@ and needs_rebuild env loc deps pattern =
        eprintf "*** tactic ‘%s’ failed with exit code %d\n" tactic r;
        exit 1
      )
+
+(* Evaluate a goal argument.  This substitutes any variables found,
+ * and recursively calls functions.
+ *)
+and evaluate_goal_arg env = function
+  | Ast.EVar (loc, name) ->
+     let expr = Ast.getvar env loc name in
+     evaluate_goal_arg env expr
+
+  | Ast.ESubsts (loc, str) ->
+     let str = Ast.substitute env loc str in
+     Ast.EConstant (loc, Ast.CString str)
+
+  | Ast.EList (loc, exprs) ->
+     Ast.EList (loc, List.map (evaluate_goal_arg env) exprs)
+
+  | Ast.ETacticConstructor (loc, name, exprs) ->
+     Ast.ETacticConstructor (loc, name, List.map (evaluate_goal_arg env) exprs)
+
+  | Ast.ECallGoal (loc, name, _) ->
+     (* Goals don't return anything so they cannot be used in
+      * goal args.  Use a function instead.
+      *)
+     failwithf "%a: cannot use goal ‘%s’ in goal argument"
+       Ast.string_loc loc name
+
+  | Ast.EConstant _
+  | Ast.EGoalDefn _
+  | Ast.ETacticDefn _ as e -> e
 
 (* Find the goal which matches the given tactic and run it.
  * cargs is a list of parameters (all constants).
