@@ -107,7 +107,8 @@ and read_string buf =
  *)
 and read_code buf level =
     parse
-    | '{'     { incr level; read_code buf level lexbuf }
+    | '{'     { Ast.Substs.add_char buf '{';
+                incr level; read_code buf level lexbuf }
     | '}'     { decr level;
                 if !level = 0 then CODE (Ast.Substs.get buf)
                 else (
