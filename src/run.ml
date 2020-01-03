@@ -69,8 +69,11 @@ and run_target env = function
 
 (* Run a goal by name. *)
 and run_goal env loc name args (params, patterns, deps, code) extra_deps =
-  Cmdline.debug "%a: running goal %s %a"
-    Ast.string_loc loc name Ast.string_expr (Ast.EList (Ast.noloc, args));
+  (* This is used to print the goal in debug and error messages only. *)
+  let debug_goal =
+    sprintf "%s (%s)" name
+      (String.concat ", " (List.map (Ast.string_expr ()) args)) in
+  Cmdline.debug "%a: running goal %s" Ast.string_loc loc debug_goal;
 
   (* This is the point where we evaluate the goal arguments.  We must
    * do this before creating the new environment, because variables
@@ -85,8 +88,9 @@ and run_goal env loc name args (params, patterns, deps, code) extra_deps =
     let params =
       try List.combine params args
       with Invalid_argument _ ->
-        failwithf "%a: calling goal ‘%s’ with wrong number of arguments"
-          Ast.string_loc loc name in
+        failwithf "%a: calling goal %s with wrong number of arguments, expecting %d args but got %d args"
+          Ast.string_loc loc debug_goal
+          (List.length params) (List.length args) in
     List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
 
   (* Check all dependencies have been updated. *)
@@ -138,10 +142,8 @@ and run_goal env loc name args (params, patterns, deps, code) extra_deps =
         match pattern_still_needs_rebuild with
         | None -> ()
         | Some pattern ->
-           failwithf "%a: goal ‘%s’ ran successfully but it did not rebuild %a"
-             Ast.string_loc loc
-             name
-             Ast.string_pattern pattern
+           failwithf "%a: goal %s ran successfully but it did not rebuild %a"
+             Ast.string_loc loc debug_goal Ast.string_pattern pattern
     )
   )
 
@@ -196,7 +198,12 @@ and needs_rebuild env loc deps extra_deps pattern =
  * cargs is a list of parameters (all constants).
  *)
 and run_tactic env loc tactic cargs =
-  Cmdline.debug "%a: running tactic %s" Ast.string_loc loc tactic;
+  (* This is used to print the tactic in debug and error messages only. *)
+  let debug_tactic =
+    Ast.string_expr ()
+      (Ast.ETacticCtor (loc, tactic,
+                        List.map (fun c -> Ast.EConstant (loc, c)) cargs)) in
+  Cmdline.debug "%a: running tactic %s" Ast.string_loc loc debug_tactic;
 
   (* Find all goals in the environment.  Returns a list of (name, goal). *)
   let goals =
@@ -231,13 +238,9 @@ and run_tactic env loc tactic cargs =
       *)
      let targs = List.map (function Ast.CString s -> [Ast.SString s]) cargs in
      let p = Ast.PTactic (loc, tactic, targs) in
-     if needs_rebuild env loc [] [] p then (
-       let t = Ast.ETacticCtor (loc, tactic,
-                                List.map (fun c -> Ast.EConstant (loc, c))
-                                  cargs) in
-       failwithf "%a: don't know how to build %a"
-         Ast.string_loc loc Ast.string_expr t
-     )
+     if needs_rebuild env loc [] [] p then
+       failwithf "%a: don't know how to build %s"
+         Ast.string_loc loc debug_tactic
 
   | [_, name, goal, args] ->
      (* Single goal matches, run it. *)
@@ -275,8 +278,8 @@ and run_tactic env loc tactic cargs =
           (g, extra_deps)
 
        | _ :: _ ->
-          failwithf "%a: multiple goals with {code} sections match tactic %s"
-            Ast.string_loc loc tactic in
+          failwithf "%a: multiple goals found which match tactic %s, but more than one of these goals have {code} sections which is not allowed"
+            Ast.string_loc loc debug_tactic in
 
      run_goal env loc name args goal extra_deps
 
