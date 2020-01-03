@@ -43,6 +43,7 @@ rule read =
     | newline { new_line lexbuf; read lexbuf }
     | ","     { COMMA }
     | ":"     { COLON }
+    | ";"     { SEMICOLON }
     | "="     { EQUALS }
     | "("     { LEFT_PAREN }
     | ")"     { RIGHT_PAREN }

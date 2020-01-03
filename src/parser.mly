@@ -70,6 +70,7 @@ let do_include env loc filename optflag file =
 %token OPTINCLUDE
 %token RIGHT_ARRAY
 %token RIGHT_PAREN
+%token SEMICOLON
 %token <Ast.substs> STRING
 %token <string> TACTIC
 %token TACTIC_KEYWORD
@@ -85,11 +86,12 @@ file:
 
 stmts:
     | (* none *) { Ast.Env.empty }
-    | stmts INCLUDE STRING
+    | stmts INCLUDE STRING option(SEMICOLON)
     { do_include $1 $loc $3 false file }
-    | stmts OPTINCLUDE STRING
+    | stmts OPTINCLUDE STRING option(SEMICOLON)
     { do_include $1 $loc $3 true file }
-    | stmts stmt  { let name, expr = $2 in Ast.Env.add name expr $1 }
+    | stmts stmt option(SEMICOLON)
+    { let name, expr = $2 in Ast.Env.add name expr $1 }
     ;
 
 stmt:
