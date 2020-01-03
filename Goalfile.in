@@ -78,7 +78,8 @@ goal maintainer-clean = : clean {
     # output which doesn't work directly in goals.
     %OCAMLDEP src/*.ml src/*.mli |
         sed ':x; /\\$/ { N; s/\\\n//; tx }' |
-        sed 's,[./[:alnum:]]\+,"&",g' > %@-t
+        sed 's,[./[:alnum:]]\+,"&",g' |
+        sed 's,.*,& ;,' > %@-t
     mv %@-t %@
 }
 
