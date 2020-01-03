@@ -8,3 +8,5 @@ might allow goals to be called with labelled parameters.
 
 Functions, eg. wildcard("*.c").  These should be defined as shell
 scripts with a selection of common functions defined in stdlib.
+
+Fix: You must use 'all ()' on the command line.
