@@ -30,7 +30,7 @@ and run_target env = function
   (* Call a goal. *)
   | Ast.ECallGoal (loc, name, args) ->
      let goal = Ast.getgoal env loc name in
-     run_goal env loc name args goal
+     run_goal env loc name args goal []
 
   (* Call a tactic. *)
   | Ast.ETacticCtor (loc, name, args) ->
@@ -68,7 +68,7 @@ and run_target env = function
      run_tactic env loc "*file" [c]
 
 (* Run a goal by name. *)
-and run_goal env loc name args (params, patterns, deps, code) =
+and run_goal env loc name args (params, patterns, deps, code) extra_deps =
   Cmdline.debug "%a: running goal %s %a"
     Ast.string_loc loc name Ast.string_expr (Ast.EList (Ast.noloc, args));
 
@@ -90,13 +90,14 @@ and run_goal env loc name args (params, patterns, deps, code) =
     List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
 
   (* Check all dependencies have been updated. *)
-  run_targets env deps;
+  run_targets env (deps @ extra_deps);
 
   (* Check if any target (ie. pattern) needs to be rebuilt.
    * As with make, a goal with no targets is always run.
    *)
   let rebuild =
-    patterns = [] || List.exists (needs_rebuild env loc deps) patterns in
+    patterns = [] ||
+    List.exists (needs_rebuild env loc deps extra_deps) patterns in
 
   if rebuild then (
     (* Run the code (if any). *)
@@ -114,6 +115,7 @@ and run_goal env loc name args (params, patterns, deps, code) =
         let env = Ast.Env.add "@" (Ast.EList (Ast.noloc, pexprs)) env in
         let env = Ast.Env.add "<" (Ast.EList (Ast.noloc, deps)) env in
         let env =
+          (* NB: extra_deps are not added to %^ *)
           match deps with
           | [] -> env
           | d :: _ -> Ast.Env.add "^" d env in
@@ -129,8 +131,10 @@ and run_goal env loc name args (params, patterns, deps, code) =
          * run (else it's an error).
          *)
         let pattern_still_needs_rebuild =
-          try Some (List.find (needs_rebuild env loc deps) patterns)
-          with Not_found -> None in
+          try
+            Some (List.find (needs_rebuild env loc deps extra_deps) patterns)
+          with
+            Not_found -> None in
         match pattern_still_needs_rebuild with
         | None -> ()
         | Some pattern ->
@@ -142,7 +146,7 @@ and run_goal env loc name args (params, patterns, deps, code) =
   )
 
 (* Return whether the target (pattern) needs to be rebuilt. *)
-and needs_rebuild env loc deps pattern =
+and needs_rebuild env loc deps extra_deps pattern =
   Cmdline.debug "%a: testing if %a needs rebuild"
     Ast.string_loc loc Ast.string_pattern pattern;
 
@@ -174,6 +178,7 @@ and needs_rebuild env loc deps pattern =
      (* Add some standard variables to the environment. *)
      let env = Ast.Env.add "<" (Ast.EList (Ast.noloc, deps)) env in
      let env =
+       (* NB: extra_deps are not added to %^ *)
        match deps with
        | [] -> env
        | d :: _ -> Ast.Env.add "^" d env in
@@ -226,7 +231,7 @@ and run_tactic env loc tactic cargs =
       *)
      let targs = List.map (function Ast.CString s -> [Ast.SString s]) cargs in
      let p = Ast.PTactic (loc, tactic, targs) in
-     if needs_rebuild env loc [] p then (
+     if needs_rebuild env loc [] [] p then (
        let t = Ast.ETacticCtor (loc, tactic,
                                 List.map (fun c -> Ast.EConstant (loc, c))
                                   cargs) in
@@ -234,14 +239,46 @@ and run_tactic env loc tactic cargs =
          Ast.string_loc loc Ast.string_expr t
      )
 
+  | [_, name, goal, args] ->
+     (* Single goal matches, run it. *)
+     run_goal env loc name args goal []
+
   | goals ->
-     (* One or more goals match.  We run them all (although if
-      * one of them succeeds in rebuilding, it will cut short the rest).
+     (* Two or more goals match.  Only one must have a CODE section,
+      * and we combine the dependencies into a "supergoal".
       *)
-     List.iter (
-       fun (_, name, goal, args) ->
-         run_goal env loc name args goal
-     ) goals
+     let with_code, without_code =
+       List.partition (
+         fun (_, _, (_, _, _, code), _) -> code <> None
+       ) goals in
+
+     let (_, name, goal, args), extra_deps =
+       match with_code with
+       | [g] ->
+          let extra_deps =
+            List.flatten (
+              List.map (fun (_, _, (_, _, deps, _), _) -> deps) without_code
+            ) in
+          (g, extra_deps)
+
+       | [] ->
+          (* This is OK, it means we'll rebuild all dependencies
+           * but there is no code to run.  Pick the first goal
+           * without code and the dependencies from the other goals.
+           *)
+          let g = List.hd without_code in
+          let extra_deps =
+            List.flatten (
+              List.map (fun (_, _, (_, _, deps, _), _) -> deps)
+                (List.tl without_code)
+            ) in
+          (g, extra_deps)
+
+       | _ :: _ ->
+          failwithf "%a: multiple goals with {code} sections match tactic %s"
+            Ast.string_loc loc tactic in
+
+     run_goal env loc name args goal extra_deps
 
 (* Test if pattern matches *tactic(cargs).  If it does
  * then we return Some args where args is the arguments that must
