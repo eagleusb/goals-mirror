@@ -41,13 +41,16 @@ let objects = [
     "src/main.cmx"
 ]
 
+let subdirs = [ "m4", "src", "stdlib", "tests" ]
+
 goal all = : ocaml_link ("src/goals", objects)
 
 goal clean = {
-    for d in `find -type d`; do
+    for d in %subdirs; do
         pushd $d
         rm -f *~
         rm -f *.cmi *.cmo *.cmx *.o
+        popd
     done
     rm -f src/parser.ml src/parser.mli src/lexer.ml src/parser.conflicts
 
