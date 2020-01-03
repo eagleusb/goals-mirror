@@ -178,7 +178,7 @@ and needs_rebuild env loc deps pattern =
        | [] -> env
        | d :: _ -> Ast.Env.add "^" d env in
      let code = Eval.to_shell_script env loc code in
-     let code = "set -e\nset -x\n\n" ^ code in
+     let code = "set -e\n" (*^ "set -x\n" *) ^ "\n" ^ code in
      let r = Sys.command code in
      if r = 99 (* means "needs rebuild" *) then true
      else if r = 0 (* means "doesn't need rebuild" *) then false
