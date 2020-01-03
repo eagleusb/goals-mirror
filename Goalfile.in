@@ -64,6 +64,9 @@ goal maintainer-clean = : clean {
 
 "src/parser.mli", "src/parser.ml" : "src/parser.mly" {
     %MENHIR --explain %<
+    # Hack required to get includes working.
+    echo 'val lexer_read : (Lexing.lexbuf -> token) option ref' \
+        >> src/parser.mli
 }
 
 "src/lexer.ml" : "src/lexer.mll" {
