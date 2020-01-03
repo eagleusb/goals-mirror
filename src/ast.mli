@@ -51,7 +51,7 @@ and expr =
   (** call goalname (params) etc. *)
   | ECallGoal of loc * id * expr list
   (** call *tactic (params) etc. *)
-  | ETacticConstructor of loc * id * expr list
+  | ETacticCtor of loc * id * expr list
   (** variable, or goal call with no parameters *)
   | EVar of loc * id
   (** list *)

@@ -37,7 +37,7 @@ let rec to_constant env = function
      failwithf "%a: cannot use goal ‘%s’ in constant expression"
        Ast.string_loc loc name
 
-  | ETacticConstructor (loc, name, _) ->
+  | ETacticCtor (loc, name, _) ->
      failwithf "%a: cannot use tactic ‘%s’ in constant expression"
        Ast.string_loc loc name
 
@@ -93,8 +93,8 @@ and expr_to_shell_string env = function
        Ast.string_loc loc name
 
   (* Tactics expand to the first parameter. *)
-  | ETacticConstructor (loc, _, []) -> Filename.quote ""
-  | ETacticConstructor (loc, _, (arg :: _)) -> expr_to_shell_string env arg
+  | ETacticCtor (loc, _, []) -> Filename.quote ""
+  | ETacticCtor (loc, _, (arg :: _)) -> expr_to_shell_string env arg
 
   | EGoalDefn (loc, _) ->
      failwithf "%a: cannot use goal in shell expansion"
@@ -116,8 +116,8 @@ let rec evaluate_goal_arg env = function
   | EList (loc, exprs) ->
      Ast.EList (loc, List.map (evaluate_goal_arg env) exprs)
 
-  | ETacticConstructor (loc, name, exprs) ->
-     Ast.ETacticConstructor (loc, name, List.map (evaluate_goal_arg env) exprs)
+  | ETacticCtor (loc, name, exprs) ->
+     Ast.ETacticCtor (loc, name, List.map (evaluate_goal_arg env) exprs)
 
   | ECallGoal (loc, name, _) ->
      (* Goals don't return anything so they cannot be used in
