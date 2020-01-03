@@ -74,15 +74,14 @@ goal maintainer-clean = : clean {
 # XXX Goalfile itself depends on this and we should probably have a
 # way to reevaluate it.
 # XXX Atomic output.
-# XXX GNU sed: https://unix.stackexchange.com/a/13704
 "src/.depend" : {
     rm -f %@ %@-t
     # Like many existing tools, ocamldep produces make-compatible
     # output which doesn't work directly in goals.
-    %OCAMLDEP src/*.ml src/*.mli |
-        sed ':x; /\\$/ { N; s/\\\n//; tx }' |
-        sed 's,[./[:alnum:]]\+,"&",g' |
-        sed 's,.*,& ;,' > %@-t
+    %OCAMLDEP -all -one-line src/*.ml src/*.mli |
+        sed 's|[./[:alnum:]]\+|"&"|g' |
+        sed 's|" "|", "|g' |
+        sed 's|.*|& ;|' > %@-t
     mv %@-t %@
 }
 
