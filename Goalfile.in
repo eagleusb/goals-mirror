@@ -43,7 +43,7 @@ let objects = [
 
 let subdirs = [ "m4", "src", "stdlib", "tests" ]
 
-goal all = : ocaml_link ("src/goals", objects)
+goal all = : "Goalfile", ocaml_link ("src/goals", objects)
 
 goal clean = {
     for d in %subdirs; do
@@ -88,10 +88,11 @@ goal depend () =
     mv %@-t %@
 }
 
--include "src/.depend"
+-include "src/.depend";
 
-# XXX The Goalfile itself needs rules to rebuild it.
-#Makefile: Makefile.in ../config.status
-#        ../config.status $@
-#config.ml: config.ml.in ../config.status
-#        ../config.status $@
+"Goalfile": "Goalfile.in", "config.status" {
+    ./config.status %@
+}
+"src/config.ml" : "src/config.ml.in", "config.status" {
+    ./config.status %@
+}
