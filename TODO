@@ -1,5 +1,5 @@
-'let :=' for immediate evaluation in assignment.  Does this work
-for included files?
+'let :=' for immediate evaluation in assignment.  Does this work for
+included files?  Also ?= to only override if not already defined.
 
 Default parameters, ie:
   goal foo (name, release = true) = ...
@@ -11,3 +11,21 @@ Fix: You must use 'all ()' on the command line.
 "Quiet" code.  Generally {CODE} sections in user files should be
 echos, and those in stdlib should run silently (except if debugging).
 Maybe we should have a quiet keyword to indicate this?
+
+Deleting target files if goals is interrupted, but only if the
+timestamp changes (what about non-*files?).  Also: atomic code.  This
+will delete the target if the code doesn't run to completion.  (make
+doesn't do this, but probably it should).
+
+Implement parallel builds.
+
+Conditional sections (same as "ifeq" etc in make).
+
+Let within functions and goals, eg:
+  function foo () =
+    let temp = "%bar%baz";
+    { .... }
+Unclear if this would be helpful or not.
+
+Implement more make functions, see:
+https://www.gnu.org/software/make/manual/html_node/Functions.html#Functions
