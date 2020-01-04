@@ -37,6 +37,17 @@ tactic *exists (filename) = {
     test -f %filename || exit 99
 }
 
+#----------------------------------------------------------------------
+# Text functions.
+
+# Sort + uniq a list.
+function sort (xs) = {
+    for f in %xs; do echo "$f"; done | sort -u
+}
+
+#----------------------------------------------------------------------
+# File functions.
+
 # Expand a wildcard into a list of filenames.
 function wildcard (wc) = {
     shopt -s nullglob
