@@ -41,58 +41,57 @@ val string_loc : unit -> loc -> string
     variable or goal name -> expression. *)
 type env = expr Env.t
 and pattern =
-  (** match tactic such as *file ("filename") *)
   | PTactic of loc * id * substs list
+  (** match tactic such as *file ("filename") *)
 and expr =
-  (** goal (params) = patterns : exprs code *)
   | EGoalDefn of loc * goal
-  (** function (params) = code *)
+  (** goal (params) = patterns : exprs code *)
   | EFuncDefn of loc * func
-  (** tactic (params) = code *)
+  (** function (params) = code *)
   | ETacticDefn of loc * tactic
-  (** call goal (params) or function (params) *)
+  (** tactic (params) = code *)
   | ECall of loc * id * expr list
-  (** call *tactic (params) etc. *)
+  (** call goal (params) or function (params) *)
   | ETacticCtor of loc * id * expr list
-  (** variable, or goal call with no parameters *)
+  (** constructor *tactic (params) *)
   | EVar of loc * id
-  (** list *)
+  (** variable, or goal call with no parameters *)
   | EList of loc * expr list
-  (** string with %-substitutions *)
+  (** list *)
   | ESubsts of loc * substs
-  (** constant expression, such as a plain string, int, boolean, etc. *)
+  (** string with %-substitutions *)
   | EConstant of loc * constant
+  (** constant expression, such as a plain string, int, boolean, etc. *)
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
 and func = param_decl list * code
 and tactic = param_decl list * code
-  (** Goal/func/tactic parameter. *)
-and param_decl = id
+and param_decl = id             (** goal/func/tactic parameter. *)
 and id = string
 and code = substs
 and substs = subst list
 and subst =
-  (** String literal part. *)
   | SString of string
-  (** %-substitution. *)
+  (** String literal part. *)
   | SVar of id
+  (** %-substitution. *)
 
+val getvar : env -> loc -> id -> expr
 (** Look up a variable in the environment.  Raise [Failure _]
     if not found. *)
-val getvar : env -> loc -> id -> expr
 
+val getgoal : env -> loc -> id -> goal
 (** Look up a goal in the environment.  Raise [Failure _] if not
     found or if the named variable is not a goal. *)
-val getgoal : env -> loc -> id -> goal
 
+val getfunc : env -> loc -> id -> func
 (** Look up a function in the environment.  Raise [Failure _] if not
     found or if the named variable is not a function. *)
-val getfunc : env -> loc -> id -> func
 
+val gettactic : env -> loc -> id -> tactic
 (** Look up a tactic in the environment.  Raise [Failure _] if not
     found or if the named variable is not a tactic. *)
-val gettactic : env -> loc -> id -> tactic
 
 (** This is used for incrementally building Ast.substs in the parser. *)
 module Substs : sig
