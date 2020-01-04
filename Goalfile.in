@@ -81,7 +81,7 @@ goal depend () =
     rm -f %@ %@-t
     # Like many existing tools, ocamldep produces make-compatible
     # output which doesn't work directly in goals.
-    %OCAMLDEP -all -one-line %< |
+    %OCAMLDEP -all -one-line -I src %< |
         sed 's|[./[:alnum:]]\+|"&"|g' |
         sed 's|" "|", "|g' |
         sed 's|.*|& ;|' > %@-t
