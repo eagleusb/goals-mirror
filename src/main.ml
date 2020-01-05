@@ -19,6 +19,11 @@
 
 open Printf
 
+(* See comment in parser.mly. *)
+let () =
+  Parser.lexer_read := Some Lexer.read;
+  Parser.eval_substitute := Some Eval.substitute
+
 let main () =
   (* Change directory (-C option). *)
   Sys.chdir Cmdline.directory;
@@ -37,12 +42,12 @@ let main () =
   let env =
     List.fold_left (
       fun env (name, expr) ->
-        let expr = Parse.parse_cli_expr expr in
+        let expr = Parse.parse_expr "commandline" expr in
         Ast.Env.add name expr env
     ) env Cmdline.anon_vars in
 
   (* Parse the target expressions. *)
-  let targets = List.map Parse.parse_cli_expr Cmdline.targets in
+  let targets = List.map (Parse.parse_expr "commandline") Cmdline.targets in
 
   (* If no target was set on the command line, use "all ()". *)
   let targets =

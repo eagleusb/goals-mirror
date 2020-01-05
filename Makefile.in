@@ -27,6 +27,7 @@ all clean depend install: src/goals
 # goals itself (see Goalfile.in).
 
 MENHIR = @MENHIR@
+OCAMLDEP = @OCAMLDEP@
 OCAMLFIND = @OCAMLFIND@
 OCAMLLEX = @OCAMLLEX@
 OCAMLFLAGS = @OCAMLFLAGS@
@@ -34,18 +35,12 @@ OCAMLPACKAGES = @OCAMLPACKAGES@
 
 src/goals:
 	$(MENHIR) --explain src/parser.mly
-# Hack required to get includes working.
-	echo 'val lexer_read : (Lexing.lexbuf -> token) option ref' \
-	    >> src/parser.mli
+# Hack required to break circular dependencies.
+	echo 'val lexer_read : (Lexing.lexbuf -> token) option ref' >> src/parser.mli
+	echo 'val eval_substitute : (Ast.env -> Ast.loc -> Ast.substs -> string) option ref' >> src/parser.mli
 	$(OCAMLLEX) src/lexer.mll
 	$(OCAMLFIND) opt $(OCAMLFLAGS) $(OCAMLPACKAGES) -I src \
-	    src/config.mli src/utils.mli src/cmdline.mli src/ast.mli \
-	    src/eval.mli src/run.mli src/parser.mli src/lexer.mli \
-	    src/parse.mli \
-	    src/config.ml src/utils.ml src/cmdline.ml src/ast.ml \
-	    src/eval.ml src/run.ml src/parser.ml src/lexer.ml \
-	    src/parse.ml \
-	    src/main.ml \
+	    $$($(OCAMLDEP) -sort src/*.mli src/*.ml) \
 	    -linkpkg -o $@
 
 # These rules are required by autoconf.

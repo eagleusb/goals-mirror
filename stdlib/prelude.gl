@@ -42,7 +42,12 @@ tactic *exists (filename) = {
 
 # Sort + uniq a list.
 function sort (xs) = {
-    for f in %xs; do echo "$f"; done | sort -u
+    # XXX Quoting
+    echo '['
+    for f in %xs; do echo "$f"; done |
+        sort -u |
+        sed 's/.*/"&",/'
+    echo ']'
 }
 
 #----------------------------------------------------------------------
@@ -50,11 +55,14 @@ function sort (xs) = {
 
 # Expand a wildcard into a list of filenames.
 function wildcard (wc) = {
+    # XXX Quoting
     shopt -s nullglob
     # Note that the substitution is quoted by goals, so to expand
     # it we must assign it to a variable and then use it unquoted.
     wc=%wc
+    echo '['
     for f in $wc; do
-        echo "$f"
+        echo "\"$f\","
     done
+    echo ']'
 }

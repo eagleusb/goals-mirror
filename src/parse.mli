@@ -18,4 +18,4 @@
  *)
 
 val parse_goalfile : Ast.env -> string -> Ast.env
-val parse_cli_expr : string -> Ast.expr
+val parse_expr : string -> string -> Ast.expr

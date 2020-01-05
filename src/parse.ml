@@ -22,9 +22,6 @@ open Lexing
 
 open Printf
 
-let () =
-  Parser.lexer_read := Some Lexer.read
-
 let print_position fp lexbuf =
   let pos = lexbuf.lex_curr_p in
   fprintf fp "%s:%d:%d"
@@ -62,9 +59,11 @@ let parse_goalfile env filename =
   close_in fp;
   env'
 
-(* This is used to parse dependency expressions on the command line. *)
-let parse_cli_expr str =
-  Cmdline.debug "parsing from command line: %S" str;
+(* This is used to parse expressions on the command line and
+ * the output from functions.
+ *)
+let parse_expr source str =
+  Cmdline.debug "parse expression: %S" str;
   let lexbuf = Lexing.from_string str in
-  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "<command line>" };
+  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = source };
   parse_expr lexbuf

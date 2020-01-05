@@ -33,11 +33,11 @@ let objects = [
     "src/utils.cmx",
     "src/cmdline.cmx",
     "src/ast.cmx",
-    "src/eval.cmx",
-    "src/run.cmx",
     "src/parser.cmx",
     "src/lexer.cmx",
     "src/parse.cmx",
+    "src/eval.cmx",
+    "src/run.cmx",
     "src/main.cmx"
 ]
 
@@ -64,9 +64,9 @@ goal maintainer-clean = : clean {
 
 "src/parser.mli", "src/parser.ml" : "src/parser.mly" {
     %MENHIR --explain %<
-    # Hack required to get includes working.
-    echo 'val lexer_read : (Lexing.lexbuf -> token) option ref' \
-        >> src/parser.mli
+    # Hack required to break circular dependencies.
+    echo 'val lexer_read : (Lexing.lexbuf -> token) option ref' >> src/parser.mli
+    echo 'val eval_substitute : (Ast.env -> Ast.loc -> Ast.substs -> string) option ref' >> src/parser.mli
 }
 
 "src/lexer.ml" : "src/lexer.mll" {

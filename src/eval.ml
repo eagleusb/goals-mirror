@@ -183,10 +183,8 @@ and evaluate_goal_arg env = function
 (* Functions are only called from goal args or when substituting
  * into a shell script or constant expression (this may change if we
  * implement ‘:=’ assignment for variables).  This evaluates a
- * function by running the associated shell script and substituting
- * the output into an EList.
- *
- * XXX In future allow functions to be annotated with a return type.
+ * function by running the associated shell script and parsing
+ * the output as an expression.
  *)
 and call_function env loc name args (params, code) =
   (* This is used to print the function in debug and error messages only. *)
@@ -215,10 +213,13 @@ and call_function env loc name args (params, code) =
   let code = "set -e\n" (*^ "set -x\n"*) ^ "\n" ^ code in
 
   let chan = Unix.open_process_in code in
-  let lines = ref [] in
-  (try while true do lines := input_line chan :: !lines done
+  let b = Buffer.create 1024 in
+  (try
+     while true do
+       Buffer.add_string b (input_line chan);
+       Buffer.add_char b '\n'
+     done
    with End_of_file -> ());
-  let lines = List.rev !lines in
   let st = Unix.close_process_in chan in
   (match st with
   | Unix.WEXITED 0 -> ()
@@ -230,7 +231,4 @@ and call_function env loc name args (params, code) =
      eprintf "*** function ‘%s’ stopped by signal %d\n" name i
   );
 
-  Ast.EList (Ast.noloc,
-             (List.map (fun line ->
-                  Ast.EConstant (Ast.noloc, Ast.CString line))
-                lines))
+  Parse.parse_expr (sprintf "function:%s" name) (Buffer.contents b)

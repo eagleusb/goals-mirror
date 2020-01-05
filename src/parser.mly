@@ -21,11 +21,13 @@
 open Utils
 open Printf
 
-(* This is initialized with Lexer.read once the program
- * starts.  Doing this avoids a circular dependency caused
- * by include files.
+(* There are several circular dependencies between the lexer
+ * (caused by includes) and eval.  These references break
+ * the circular dependencies.  They are initialized when
+ * the program starts, hence are never really None.
  *)
 let lexer_read = ref None
+let eval_substitute = ref None
 
 let find_on_include_path filename =
   if not (Filename.is_implicit filename) then filename
@@ -40,16 +42,18 @@ let find_on_include_path filename =
   )
 
 let do_include env loc filename optflag file =
-  let filename = Eval.substitute env loc filename in
+  let eval_substitute =
+    match !eval_substitute with None -> assert false | Some f -> f in
+  let filename = eval_substitute env loc filename in
   let filename = find_on_include_path filename in
   if optflag && not (Sys.file_exists filename) then env
   else (
     let fp = open_in filename in
     let lexbuf = Lexing.from_channel fp in
     lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
-    let reader =
+    let lexer_read =
       match !lexer_read with None -> assert false | Some r -> r in
-    let env' = file reader lexbuf in
+    let env' = file lexer_read lexbuf in
     close_in fp;
     Ast.Env.merge env env'
   )
@@ -152,8 +156,14 @@ expr:
     | LEFT_ARRAY barelist RIGHT_ARRAY { Ast.EList ($loc, $2) }
     ;
 barelist:
-    | separated_list(COMMA, expr) { $1 }
+    | right_flexible_list(COMMA, expr) { $1 }
     ;
 params:
     | LEFT_PAREN separated_list(COMMA, expr) RIGHT_PAREN { $2 }
     ;
+
+(* http://gallium.inria.fr/blog/lr-lists/ *)
+right_flexible_list(delim, X):
+    | (* nothing *) { [] }
+    | x = X { [x] }
+    | x = X delim xs = right_flexible_list(delim, X) { x :: xs }
