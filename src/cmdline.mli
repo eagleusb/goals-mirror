@@ -20,8 +20,11 @@
 val stdlibdir : string
 (** Get the stdlib directory. *)
 
-val prelude_file : string
+val prelude_gl_file : string
 (** Get the absolute path of the prelude.gl file. *)
+
+val prelude_sh_file : string
+(** Get the absolute path of the prelude.sh file. *)
 
 val input_file : string
 (** Get the name of the input Goalfile.

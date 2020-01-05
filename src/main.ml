@@ -31,7 +31,7 @@ let main () =
   (* Parse the prelude. *)
   let env =
     if Cmdline.use_prelude then
-      Parse.parse_goalfile Ast.Env.empty Cmdline.prelude_file
+      Parse.parse_goalfile Ast.Env.empty Cmdline.prelude_gl_file
     else
       Ast.Env.empty in
 

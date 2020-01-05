@@ -132,9 +132,7 @@ and run_goal env loc name args (params, patterns, deps, code) extra_deps =
           match deps with
           | [] -> env
           | d :: _ -> Ast.Env.add "^" d env in
-        let code = Eval.to_shell_script env loc code in
-        let code = "set -e\nset -x\n\n" ^ code in
-        let r = Sys.command code in
+        let r, _ = Eval.run_code env loc code in
         if r <> 0 then (
           eprintf "*** goal ‘%s’ failed with exit code %d\n" name r;
           exit 1
@@ -193,9 +191,7 @@ and needs_rebuild env loc deps extra_deps pattern =
        match deps with
        | [] -> env
        | d :: _ -> Ast.Env.add "^" d env in
-     let code = Eval.to_shell_script env loc code in
-     let code = "set -e\n" (*^ "set -x\n"*) ^ "\n" ^ code in
-     let r = Sys.command code in
+     let r, _ = Eval.run_code ~quiet:true env loc code in
      if r = 99 (* means "needs rebuild" *) then true
      else if r = 0 (* means "doesn't need rebuild" *) then false
      else (

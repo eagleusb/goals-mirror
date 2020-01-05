@@ -27,11 +27,9 @@ val to_constant : Ast.env -> Ast.expr -> Ast.constant
     raises [Failure _]. *)
 val substitute : Ast.env -> Ast.loc -> Ast.substs -> string
 
-(** Similar to {!substitute} except this is used where we will
-    pass the result immediately to the shell to execute.  Variables
-    are substituted with shell quoted strings.  Raises [Failure _]
-    on error. *)
-val to_shell_script : Ast.env -> Ast.loc -> Ast.substs -> string
+(** Run a code section.  Returns the exit code and the output printed
+    by the script.  Raises [Failure _] on error. *)
+val run_code : ?quiet:bool -> Ast.env -> Ast.loc -> Ast.substs -> int * string
 
 (** Evaluate a goal argument.  This substitutes any variables found,
     and recursively calls functions. *)

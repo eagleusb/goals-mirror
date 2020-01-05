@@ -142,6 +142,33 @@ and expr_to_shell_string env = function
      failwithf "%a: cannot use tactic in shell expansion"
        Ast.string_loc loc
 
+and run_code ?(quiet = false) env loc code =
+  let code = to_shell_script env loc code in
+  let code =
+    "source " ^ Filename.quote Cmdline.prelude_sh_file ^ "\n" ^
+    "set -e\n" ^
+    (if not quiet then "set -x\n" else "") ^
+    "\n" ^
+    code in
+
+  let chan = Unix.open_process_in code in
+  let b = Buffer.create 1024 in
+  (try
+     while true do
+       Buffer.add_string b (input_line chan);
+       Buffer.add_char b '\n'
+     done
+   with End_of_file -> ());
+  let st = Unix.close_process_in chan in
+  let i =
+    match st with
+    | Unix.WEXITED i -> i
+    | Unix.WSIGNALED i ->
+       failwithf "%a: killed by signal %d" Ast.string_loc loc i
+    | Unix.WSTOPPED i ->
+       failwithf "%a: stopped by signal %d" Ast.string_loc loc i in
+  i, Buffer.contents b
+
 and evaluate_goal_arg env = function
   | Ast.EVar (loc, name) ->
      let expr = Ast.getvar env loc name in
@@ -208,27 +235,9 @@ and call_function env loc name args (params, code) =
           (List.length params) (List.length args) in
     List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
 
-  (* Run the code. *)
-  let code = to_shell_script env loc code in
-  let code = "set -e\n" (*^ "set -x\n"*) ^ "\n" ^ code in
-
-  let chan = Unix.open_process_in code in
-  let b = Buffer.create 1024 in
-  (try
-     while true do
-       Buffer.add_string b (input_line chan);
-       Buffer.add_char b '\n'
-     done
-   with End_of_file -> ());
-  let st = Unix.close_process_in chan in
-  (match st with
-  | Unix.WEXITED 0 -> ()
-  | Unix.WEXITED i ->
-     eprintf "*** function ‘%s’ failed with exit code %d\n" name i
-  | Unix.WSIGNALED i ->
-     eprintf "*** function ‘%s’ killed by signal %d\n" name i
-  | Unix.WSTOPPED i ->
-     eprintf "*** function ‘%s’ stopped by signal %d\n" name i
+  let r, b = run_code env loc code in
+  if r <> 0 then (
+    eprintf "*** function ‘%s’ failed with exit code %d\n" name r;
+    exit 1
   );
-
-  Parse.parse_expr (sprintf "function:%s" name) (Buffer.contents b)
+  Parse.parse_expr (sprintf "function:%s" name) b

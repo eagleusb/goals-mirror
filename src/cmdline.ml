@@ -43,9 +43,10 @@ let print_version () =
 let datadir =
   try Sys.getenv "GOALS_DATADIR" with Not_found -> Config.datadir
 let stdlibdir = datadir // "stdlib"
-let prelude_file = stdlibdir // "prelude.gl"
+let prelude_gl_file = stdlibdir // "prelude.gl"
+let prelude_sh_file = stdlibdir // "prelude.sh"
 let () =
-  if not (is_directory stdlibdir) || not (Sys.file_exists prelude_file) then
+  if not (is_directory stdlibdir) || not (Sys.file_exists prelude_gl_file) then
     failwithf "%s: cannot find the standard library directory, expected %s.  If the standard library directory is in a non-standard location then set GOALS_DATADIR.  If you can trying to run goals from the build directory then use ‘./run goals ...’"
       Sys.executable_name stdlibdir
 
