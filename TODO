@@ -33,3 +33,9 @@ https://www.gnu.org/software/make/manual/html_node/Functions.html#Functions
 Make re-execs itself if the Makefile (or any include) changes, and
 goals should do something similar.  See:
 https://www.gnu.org/software/make/manual/html_node/Remaking-Makefiles.html
+
+Code should be an expression, eg this ought to work:
+let foo = { echo "hello" }
+
+Should the environment be populated by the actual environment, eg:
+let homedir = "%HOME"
