@@ -53,8 +53,9 @@ let parse_expr lexbuf =
 let parse_goalfile env filename =
   Cmdline.debug "parse file: %s" filename;
   let fp = open_in filename in
-  let lexbuf = Lexing.from_channel fp in
-  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
+  let lexbuf = Lexing.from_channel ~with_positions:true fp in
+  let pos = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <- { pos with pos_fname = filename };
   let env' = parse_file env lexbuf in
   close_in fp;
   env'
@@ -64,6 +65,7 @@ let parse_goalfile env filename =
  *)
 let parse_expr source str =
   Cmdline.debug "parse expression: %S" str;
-  let lexbuf = Lexing.from_string str in
-  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = source };
+  let lexbuf = Lexing.from_string ~with_positions:true str in
+  let pos = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <- { pos with pos_fname = source };
   parse_expr lexbuf
