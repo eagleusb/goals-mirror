@@ -142,7 +142,7 @@ and expr_to_shell_string env = function
      failwithf "%a: cannot use tactic in shell expansion"
        Ast.string_loc loc
 
-and run_code ?(quiet = false) env loc code =
+and run_code env loc (code, quiet) =
   let code = to_shell_script env loc code in
   let code =
     "source " ^ Filename.quote Cmdline.prelude_sh_file ^ "\n" ^

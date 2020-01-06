@@ -60,7 +60,7 @@ let do_include env loc filename optflag file =
 %}
 
 (* Tokens. *)
-%token <Ast.substs> CODE
+%token <Ast.code> CODE
 %token COLON
 %token COMMA
 %token EQUALS

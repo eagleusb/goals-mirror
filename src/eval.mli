@@ -29,7 +29,7 @@ val substitute : Ast.env -> Ast.loc -> Ast.substs -> string
 
 (** Run a code section.  Returns the exit code and the output printed
     by the script.  Raises [Failure _] on error. *)
-val run_code : ?quiet:bool -> Ast.env -> Ast.loc -> Ast.substs -> int * string
+val run_code : Ast.env -> Ast.loc -> Ast.code -> int * string
 
 (** Evaluate a goal argument.  This substitutes any variables found,
     and recursively calls functions. *)

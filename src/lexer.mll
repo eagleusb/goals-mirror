@@ -50,7 +50,8 @@ rule read =
     | "["     { LEFT_ARRAY }
     | "]"     { RIGHT_ARRAY }
     | '"'     { read_string (Ast.Substs.create ()) lexbuf }
-    | "{"     { read_code (Ast.Substs.create ()) (ref 1) lexbuf }
+    | "{"     { read_code false (Ast.Substs.create ()) (ref 1) lexbuf }
+    | "@{"    { read_code true  (Ast.Substs.create ()) (ref 1) lexbuf }
     | "goal"  { GOAL }
     | "tactic"
               { TACTIC_KEYWORD }
@@ -119,31 +120,31 @@ and read_string buf =
  * Note the range of %-substitutions possible is larger than
  * for strings.
  *)
-and read_code buf level =
+and read_code quiet buf level =
     parse
     | '{'     { Ast.Substs.add_char buf '{';
-                incr level; read_code buf level lexbuf }
+                incr level; read_code quiet buf level lexbuf }
     | '}'     { decr level;
-                if !level = 0 then CODE (Ast.Substs.get buf)
+                if !level = 0 then CODE (Ast.Substs.get buf, quiet)
                 else (
                   Ast.Substs.add_char buf '}';
-                  read_code buf level lexbuf
+                  read_code quiet buf level lexbuf
                 ) }
     | newline { Ast.Substs.add_char buf '\n';
-                new_line lexbuf; read_code buf level lexbuf }
-    | '%' '%' { Ast.Substs.add_char buf '%'; read_code buf level lexbuf }
-    | '%' '@' { Ast.Substs.add_var buf "@"; read_code buf level lexbuf }
-    | '%' '<' { Ast.Substs.add_var buf "<"; read_code buf level lexbuf }
-    | '%' '^' { Ast.Substs.add_var buf "^"; read_code buf level lexbuf }
+                new_line lexbuf; read_code quiet buf level lexbuf }
+    | '%' '%' { Ast.Substs.add_char buf '%'; read_code quiet buf level lexbuf }
+    | '%' '@' { Ast.Substs.add_var buf "@"; read_code quiet buf level lexbuf }
+    | '%' '<' { Ast.Substs.add_var buf "<"; read_code quiet buf level lexbuf }
+    | '%' '^' { Ast.Substs.add_var buf "^"; read_code quiet buf level lexbuf }
     | '%' id  { let id = Lexing.lexeme lexbuf in
                 let len = String.length id in
                 Ast.Substs.add_var buf (String.sub id 1 (len-1));
-                read_code buf level lexbuf }
+                read_code quiet buf level lexbuf }
     | '%' _   { raise (SyntaxError ("illegal character in %-substitution: " ^
                                       Lexing.lexeme lexbuf)) }
     | [^ '{' '}' '\r' '\n' '%' ]+
               { Ast.Substs.add_string buf (Lexing.lexeme lexbuf);
-                read_code buf level lexbuf }
+                read_code quiet buf level lexbuf }
     | _       { raise (SyntaxError ("illegal character in code section: " ^
                                       Lexing.lexeme lexbuf)) }
     | eof     { raise (SyntaxError ("unterminated code section")) }

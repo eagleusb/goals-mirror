@@ -58,7 +58,7 @@ and func = param_decl list * returning * code
 and tactic = param_decl list * code
 and param_decl = id
 and id = string
-and code = substs
+and code = substs * bool
 and returning = RetExpr | RetStrings | RetString
 and substs = subst list
 and subst =
@@ -162,20 +162,24 @@ and string_goal () (name, (param_decls, patterns, exprs, code)) =
     (String.concat ", " (List.map (string_param_decl ()) param_decls))
     (String.concat ", " (List.map (string_pattern ()) patterns))
     (String.concat ", " (List.map (string_expr ()) exprs))
-    (match code with None -> "" | Some code -> " = { ... }")
+    (match code with None -> ""
+                   | Some (code, false) -> " = { ... }"
+                   | Some (code, true) -> " = @{ ... }")
 
-and string_func () (name, (param_decls, returning, code)) =
-  sprintf "function%s returning %s (%s) = { ... }"
+and string_func () (name, (param_decls, returning, (code, quiet))) =
+  sprintf "function%s returning %s (%s) = %s{ ... }"
     (match name with None -> "" | Some name -> " " ^ name)
     (match returning with RetExpr -> "expression"
                         | RetString -> "string"
                         | RetStrings -> "strings")
     (String.concat ", " (List.map (string_param_decl ()) param_decls))
+    (if quiet then "@" else "")
 
-and string_tactic () (name, (param_decls, code)) =
-  sprintf "tactic%s (%s) = { ... }"
+and string_tactic () (name, (param_decls, (code, quiet))) =
+  sprintf "tactic%s (%s) = %s{ ... }"
     (match name with None -> "" | Some name -> " " ^ name)
     (String.concat ", " (List.map (string_param_decl ()) param_decls))
+    (if quiet then "@" else "")
 
 and string_param_decl () name = name
 

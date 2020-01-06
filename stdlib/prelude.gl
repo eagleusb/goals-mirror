@@ -21,7 +21,7 @@
 # tactics.
 
 # The only tactic that ‘make’ has.
-tactic *file (filename) = {
+tactic *file (filename) = @{
     # Rebuild if the target file doesn't exist at all.
     test -f %filename || exit 99
 
@@ -33,7 +33,7 @@ tactic *file (filename) = {
 
 # This is a simpler tactic than the above since it will
 # rebuild if the file is missing, but not if it is older.
-tactic *exists (filename) = {
+tactic *exists (filename) = @{
     test -f %filename || exit 99
 }
 
@@ -41,7 +41,7 @@ tactic *exists (filename) = {
 # Text functions.
 
 # Sort + uniq a list.
-function sort (xs) returning strings = {
+function sort (xs) returning strings = @{
     for f in %xs; do echo "$f"; done | sort -u
 }
 
@@ -49,7 +49,7 @@ function sort (xs) returning strings = {
 # File functions.
 
 # Expand a wildcard into a list of filenames.
-function wildcard (wc) returning strings = {
+function wildcard (wc) returning strings = @{
     shopt -s nullglob
     # Note that the substitution is quoted by goals, so to expand
     # it we must assign it to a variable and then use it unquoted.
