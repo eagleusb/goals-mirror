@@ -35,6 +35,12 @@ val string_find : string -> string -> int
 (** [string_find str sub] finds the index of [sub] in [str].  If
     not found, returns -1. *)
 
+val split : string -> string -> string * string
+(** [split sep str] splits [str] at the first occurrence of the
+    separator [sep], returning the part before and the part after.
+    If separator is not found, return the whole string and an
+    empty string. *)
+
 val nsplit : ?max:int -> string -> string -> string list
 (** [nsplit ?max sep str] splits [str] into multiple strings at each
     separator [sep].

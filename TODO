@@ -43,6 +43,3 @@ Functions returning plain strings and lists of strings.
 function (foo, bar) returning string = { echo hello }
 function (foo, bar) returning strings = { echo hello; echo goodbye }
 Then re-add the sort function.
-
-Should the environment be populated by the actual environment, eg:
-let homedir = "%HOME"

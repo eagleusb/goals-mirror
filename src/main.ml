@@ -19,6 +19,8 @@
 
 open Printf
 
+open Utils
+
 (* See comment in parser.mly. *)
 let () =
   Parser.lexer_read := Some Lexer.read;
@@ -28,12 +30,27 @@ let main () =
   (* Change directory (-C option). *)
   Sys.chdir Cmdline.directory;
 
+  (* Create the initial environment, containing the system environment
+   * and a few other standard strings.
+   *)
+  let env =
+    Array.fold_left (
+      fun env environ ->
+        let k, v = split "=" environ in
+        Ast.Env.add k (Ast.EConstant (Ast.noloc, Ast.CString v)) env
+    ) Ast.Env.empty (Unix.environment ()) in
+  let env =
+    Ast.Env.add "stdlib"
+      (Ast.EConstant (Ast.noloc, Ast.CString Cmdline.stdlibdir))
+      env in
+  (*let env =
+    if Cmdline.debug_flag then Ast.Env.add "debug" (Ast.EConstant (noloc, Ast.CBool true)) env else env in *)
+
   (* Parse the prelude. *)
   let env =
     if Cmdline.use_prelude then
-      Parse.parse_goalfile Ast.Env.empty Cmdline.prelude_gl_file
-    else
-      Ast.Env.empty in
+      Parse.parse_goalfile env Cmdline.prelude_gl_file
+    else env in
 
   (* Parse the input file. *)
   let env = Parse.parse_goalfile env Cmdline.input_file in
