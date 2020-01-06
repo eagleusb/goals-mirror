@@ -148,7 +148,7 @@ patterns:
     ;
 pattern:
     | STRING     { Ast.PTactic ($loc, "*file", [$1]) }
-    | ID pattern_params { Ast.PTactic ($loc, $1, $2) }
+    | TACTIC pattern_params { Ast.PTactic ($loc, $1, $2) }
     ;
 pattern_params:
     | LEFT_PAREN separated_list(COMMA, pattern_param) RIGHT_PAREN { $2 }
