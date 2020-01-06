@@ -65,6 +65,7 @@ let do_include env loc filename optflag file =
 %token COMMA
 %token EQUALS
 %token EOF
+%token EXPRESSION
 %token FUNCTION
 %token GOAL
 %token <string> ID
@@ -73,10 +74,13 @@ let do_include env loc filename optflag file =
 %token LEFT_PAREN
 %token LET
 %token OPTINCLUDE
+%token RETURNING
 %token RIGHT_ARRAY
 %token RIGHT_PAREN
 %token SEMICOLON
 %token <Ast.substs> STRING
+%token STRING_KEYWORD
+%token STRINGS
 %token <string> TACTIC
 %token TACTIC_KEYWORD
 
@@ -113,9 +117,9 @@ stmt:
       let name, params = $1 in
       name, Ast.EGoalDefn ($loc, (params, [], [], Some $2))
     }
-    | FUNCTION ID params_decl EQUALS CODE
+    | FUNCTION ID params_decl return_decl EQUALS CODE
     {
-      $2, Ast.EFuncDefn ($loc, ($3, $5))
+      $2, Ast.EFuncDefn ($loc, ($3, $4, $6))
     }
     | TACTIC_KEYWORD TACTIC params_decl EQUALS CODE
     {
@@ -133,6 +137,11 @@ params_decl:
     ;
 param_decl:
     | ID         { $1 }
+return_decl:
+    |            { RetExpr }
+    | RETURNING EXPRESSION { RetExpr }
+    | RETURNING STRINGS { RetStrings }
+    | RETURNING STRING_KEYWORD { RetString }
 
 patterns:
     | separated_list(COMMA, pattern) { $1 }

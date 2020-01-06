@@ -36,6 +36,13 @@ https://www.gnu.org/software/make/manual/html_node/Remaking-Makefiles.html
 
 Code should be an expression, eg this ought to work:
 let foo = { echo "hello" }
+and/or anonymous functions:
+let foo = function (arg) { ... }
+
+Functions returning plain strings and lists of strings.
+function (foo, bar) returning string = { echo hello }
+function (foo, bar) returning strings = { echo hello; echo goodbye }
+Then re-add the sort function.
 
 Should the environment be populated by the actual environment, eg:
 let homedir = "%HOME"

@@ -61,6 +61,14 @@ rule read =
               { INCLUDE }
     | "-include"
               { OPTINCLUDE }
+    | "returning"
+              { RETURNING }
+    | "expression"
+              { EXPRESSION }
+    | "string"
+              { STRING_KEYWORD }
+    | "strings"
+              { STRINGS }
     | "*" id  { (* NB: The initial '*' is part of the name. *)
                 TACTIC (Lexing.lexeme lexbuf) }
     | id      { ID (Lexing.lexeme lexbuf) }

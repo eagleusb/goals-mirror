@@ -65,11 +65,12 @@ and expr =
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
-and func = param_decl list * code
+and func = param_decl list * returning * code
 and tactic = param_decl list * code
 and param_decl = id             (** goal/func/tactic parameter. *)
 and id = string
 and code = substs
+and returning = RetExpr | RetStrings | RetString
 and substs = subst list
 and subst =
   | SString of string

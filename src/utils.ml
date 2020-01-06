@@ -58,6 +58,30 @@ let rec string_find s sub =
   in
   loop 0
 
+let rec split sep str =
+  let len = String.length sep in
+  let seplen = String.length str in
+  let i = string_find str sep in
+  if i = -1 then str, ""
+  else (
+    String.sub str 0 i, String.sub str (i + len) (seplen - i - len)
+  )
+
+and nsplit ?(max = 0) sep str =
+  if max < 0 then
+    invalid_arg "String.nsplit: max parameter should not be negative";
+
+  (* If we reached the limit, OR if the pattern does not match the string
+   * at all, return the rest of the string as a single element list.
+   *)
+  if max = 1 || string_find str sep = -1 then
+    [str]
+  else (
+    let s1, s2 = split sep str in
+    let max = if max = 0 then 0 else max - 1 in
+    s1 :: nsplit ~max sep s2
+  )
+
 let isspace c =
   c = ' '
   (* || c = '\f' *) || c = '\n' || c = '\r' || c = '\t' (* || c = '\v' *)

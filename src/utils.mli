@@ -35,6 +35,15 @@ val string_find : string -> string -> int
 (** [string_find str sub] finds the index of [sub] in [str].  If
     not found, returns -1. *)
 
+val nsplit : ?max:int -> string -> string -> string list
+(** [nsplit ?max sep str] splits [str] into multiple strings at each
+    separator [sep].
+
+    As with the Perl split function, you can give an optional
+    [?max] parameter to limit the number of strings returned.  The
+    final element of the list will contain the remainder of the
+    input string. *)
+
 val isspace : char -> bool
 val triml : ?test:(char -> bool) -> string -> string
 val trimr : ?test:(char -> bool) -> string -> string

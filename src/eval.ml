@@ -211,13 +211,16 @@ and evaluate_goal_arg env = function
  * into a shell script or constant expression (this may change if we
  * implement ‘:=’ assignment for variables).  This evaluates a
  * function by running the associated shell script and parsing
- * the output as an expression.
+ * the output as an expression, string or list of strings.
  *)
-and call_function env loc name args (params, code) =
+and call_function env loc name args (params, returning, code) =
   (* This is used to print the function in debug and error messages only. *)
   let debug_func =
-    sprintf "%s (%s)" name
-      (String.concat ", " (List.map (Ast.string_expr ()) args)) in
+    sprintf "%s (%s) returning %s" name
+      (String.concat ", " (List.map (Ast.string_expr ()) args))
+      (match returning with RetExpr -> "expression"
+                          | RetString -> "string"
+                          | RetStrings -> "strings") in
   Cmdline.debug "%a: running function %s" Ast.string_loc loc debug_func;
 
   (* Evaluate function args.  Must be done before updating the environment. *)
@@ -240,4 +243,19 @@ and call_function env loc name args (params, code) =
     eprintf "*** function ‘%s’ failed with exit code %d\n" name r;
     exit 1
   );
-  Parse.parse_expr (sprintf "function:%s" name) b
+
+  match returning with
+  | RetExpr -> Parse.parse_expr (sprintf "function:%s" name) b
+  | RetString -> Ast.EConstant (loc, Ast.CString b)
+  | RetStrings ->
+     (* run_code always adds \n after the final line, so when we
+      * read it back we will get a final empty string which we
+      * have to drop.  XXX Probably better to preserve the lines
+      * read from the external command.
+      *)
+     let strs = nsplit "\n" b in
+     let strs = List.rev strs in
+     let strs = match strs with "" :: xs -> xs | xs -> xs in
+     let strs = List.rev strs in
+     let strs = List.map (fun s -> Ast.EConstant (loc, Ast.CString s)) strs in
+     EList (loc, strs)

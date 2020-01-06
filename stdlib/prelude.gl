@@ -40,21 +40,19 @@ tactic *exists (filename) = {
 #----------------------------------------------------------------------
 # Text functions.
 
-
+# Sort + uniq a list.
+function sort (xs) returning strings = {
+    for f in %xs; do echo "$f"; done | sort -u
+}
 
 #----------------------------------------------------------------------
 # File functions.
 
 # Expand a wildcard into a list of filenames.
-function wildcard (wc) = {
+function wildcard (wc) returning strings = {
     shopt -s nullglob
     # Note that the substitution is quoted by goals, so to expand
     # it we must assign it to a variable and then use it unquoted.
     wc=%wc
-    echo '['
-    for f in $wc; do
-        quoted_string "$f"
-        echo ','
-    done
-    echo ']'
+    for f in $wc; do echo "$f"; done
 }

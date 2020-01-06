@@ -54,11 +54,12 @@ and expr =
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
-and func = param_decl list * code
+and func = param_decl list * returning * code
 and tactic = param_decl list * code
 and param_decl = id
 and id = string
 and code = substs
+and returning = RetExpr | RetStrings | RetString
 and substs = subst list
 and subst =
   | SString of string
@@ -163,9 +164,12 @@ and string_goal () (name, (param_decls, patterns, exprs, code)) =
     (String.concat ", " (List.map (string_expr ()) exprs))
     (match code with None -> "" | Some code -> " = { ... }")
 
-and string_func () (name, (param_decls, code)) =
-  sprintf "function%s (%s) = { ... }"
+and string_func () (name, (param_decls, returning, code)) =
+  sprintf "function%s returning %s (%s) = { ... }"
     (match name with None -> "" | Some name -> " " ^ name)
+    (match returning with RetExpr -> "expression"
+                        | RetString -> "string"
+                        | RetStrings -> "strings")
     (String.concat ", " (List.map (string_param_decl ()) param_decls))
 
 and string_tactic () (name, (param_decls, code)) =
