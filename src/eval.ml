@@ -144,15 +144,12 @@ and expr_to_shell_string env = function
      failwithf "%a: cannot use tactic in shell expansion"
        Ast.string_loc loc
 
-and run_code env loc (code, quiet) =
-  let code = to_shell_script env loc code in
-  let code =
-    "source " ^ Filename.quote Cmdline.prelude_sh_file ^ "\n" ^
-    "set -e\n" ^
-    (if not quiet then "set -x\n" else "") ^
-    "\n" ^
-    code in
+and run_code env loc code =
+  let code = prepare_code env loc code in
+  Sys.command code
 
+and run_code_to_string env loc code =
+  let code = prepare_code env loc code in
   let chan = Unix.open_process_in code in
   let b = Buffer.create 1024 in
   (try
@@ -170,6 +167,31 @@ and run_code env loc (code, quiet) =
     | Unix.WSTOPPED i ->
        failwithf "%a: stopped by signal %d" Ast.string_loc loc i in
   i, Buffer.contents b
+
+and run_code_to_string_list env loc code =
+  let code = prepare_code env loc code in
+  let chan = Unix.open_process_in code in
+  let lines = ref [] in
+  (try while true do lines := input_line chan :: !lines done
+   with End_of_file -> ());
+  let st = Unix.close_process_in chan in
+  let i =
+    match st with
+    | Unix.WEXITED i -> i
+    | Unix.WSIGNALED i ->
+       failwithf "%a: killed by signal %d" Ast.string_loc loc i
+    | Unix.WSTOPPED i ->
+       failwithf "%a: stopped by signal %d" Ast.string_loc loc i in
+  let lines = List.rev !lines in
+  i, lines
+
+and prepare_code env loc (code, quiet) =
+  let code = to_shell_script env loc code in
+  "source " ^ Filename.quote Cmdline.prelude_sh_file ^ "\n" ^
+  "set -e\n" ^
+  (if not quiet then "set -x\n" else "") ^
+  "\n" ^
+  code
 
 and evaluate_goal_arg env = function
   | Ast.EVar (loc, name) ->
@@ -244,26 +266,26 @@ and call_function env loc name args (params, returning, pure, code) =
   else call_function_really env loc name returning code
 
 and call_function_really env loc name returning code =
-  let r, b = run_code env loc code in
-  if r <> 0 then (
-    eprintf "*** function ‘%s’ failed with exit code %d\n" name r;
-    exit 1
-  );
-
   match returning with
-  | RetExpr -> Parse.parse_expr (sprintf "function:%s" name) b
-  | RetString -> Ast.EConstant (loc, Ast.CString b)
+  | RetExpr ->
+     let r, b = run_code_to_string env loc code in
+     if r <> 0 then (
+       eprintf "*** function ‘%s’ failed with exit code %d\n" name r;
+       exit 1
+     );
+     Parse.parse_expr (sprintf "function:%s" name) b
+
+  | RetString ->
+     let r, b = run_code_to_string env loc code in
+     if r <> 0 then (
+       eprintf "*** function ‘%s’ failed with exit code %d\n" name r;
+       exit 1
+     );
+     Ast.EConstant (loc, Ast.CString b)
+
   | RetStrings ->
-     (* run_code always adds \n after the final line, so when we
-      * read it back we will get a final empty string which we
-      * have to drop.  XXX Probably better to preserve the lines
-      * read from the external command.
-      *)
-     let strs = nsplit "\n" b in
-     let strs = List.rev strs in
-     let strs = match strs with "" :: xs -> xs | xs -> xs in
-     let strs = List.rev strs in
-     let strs = List.map (fun s -> Ast.EConstant (loc, Ast.CString s)) strs in
+     let r, lines = run_code_to_string_list env loc code in
+     let strs = List.map (fun s -> Ast.EConstant (loc, Ast.CString s)) lines in
      EList (loc, strs)
 
 (* For pure functions, check if the function can be matched to

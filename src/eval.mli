@@ -27,9 +27,18 @@ val to_constant : Ast.env -> Ast.expr -> Ast.constant
     raises [Failure _]. *)
 val substitute : Ast.env -> Ast.loc -> Ast.substs -> string
 
-(** Run a code section.  Returns the exit code and the output printed
-    by the script.  Raises [Failure _] on error. *)
-val run_code : Ast.env -> Ast.loc -> Ast.code -> int * string
+(** Run a code section.  Returns the exit code.
+    Raises [Failure _] on error. *)
+val run_code : Ast.env -> Ast.loc -> Ast.code -> int
+
+(** Run a code section.  Returns the exit code and the full stdout
+    as a string.  Raises [Failure _] on error. *)
+val run_code_to_string : Ast.env -> Ast.loc -> Ast.code -> int * string
+
+(** Run a code section.  Returns the exit code and the full stdout
+    as a list of strings.  Raises [Failure _] on error. *)
+val run_code_to_string_list : Ast.env -> Ast.loc -> Ast.code ->
+                              int * string list
 
 (** Evaluate a goal argument.  This substitutes any variables found,
     and recursively calls functions. *)
