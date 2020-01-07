@@ -8,10 +8,6 @@ might allow goals to be called with labelled parameters.
 
 Fix: You must use 'all ()' on the command line.
 
-"Quiet" code.  Generally {CODE} sections in user files should be
-echos, and those in stdlib should run silently (except if debugging).
-Maybe we should have a quiet keyword to indicate this?
-
 Deleting target files if goals is interrupted, but only if the
 timestamp changes (what about non-*files?).  Also: atomic code.  This
 will delete the target if the code doesn't run to completion.  (make
@@ -38,8 +34,3 @@ Code should be an expression, eg this ought to work:
 let foo = { echo "hello" }
 and/or anonymous functions:
 let foo = function (arg) { ... }
-
-Functions returning plain strings and lists of strings.
-function (foo, bar) returning string = { echo hello }
-function (foo, bar) returning strings = { echo hello; echo goodbye }
-Then re-add the sort function.
