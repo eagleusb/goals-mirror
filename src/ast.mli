@@ -65,7 +65,7 @@ and expr =
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
-and func = param_decl list * returning * code
+and func = param_decl list * returning * bool * code
 and tactic = param_decl list * code
 and param_decl = id             (** goal/func/tactic parameter. *)
 and id = string

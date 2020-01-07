@@ -57,6 +57,7 @@ rule read =
               { TACTIC_KEYWORD }
     | "function"
               { FUNCTION }
+    | "pure"  { PURE }
     | "let"   { LET }
     | "include"
               { INCLUDE }

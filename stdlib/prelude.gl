@@ -41,7 +41,7 @@ tactic *exists (filename) = @{
 # Text functions.
 
 # Sort + uniq a list.
-function sort (xs) returning strings = @{
+pure function sort (xs) returning strings = @{
     for f in %xs; do echo "$f"; done | sort -u
 }
 
@@ -49,6 +49,11 @@ function sort (xs) returning strings = @{
 # File functions.
 
 # Expand a wildcard into a list of filenames.
+#
+# This function is probably not "pure" since it depends on the
+# current working directory and also files may be created in
+# the directory while goals is running which would affect the
+# result.
 function wildcard (wc) returning strings = @{
     shopt -s nullglob
     # Note that the substitution is quoted by goals, so to expand

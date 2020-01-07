@@ -54,7 +54,7 @@ and expr =
 and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
-and func = param_decl list * returning * code
+and func = param_decl list * returning * bool * code
 and tactic = param_decl list * code
 and param_decl = id
 and id = string
@@ -166,8 +166,9 @@ and string_goal () (name, (param_decls, patterns, exprs, code)) =
                    | Some (code, false) -> " = { ... }"
                    | Some (code, true) -> " = @{ ... }")
 
-and string_func () (name, (param_decls, returning, (code, quiet))) =
-  sprintf "function%s returning %s (%s) = %s{ ... }"
+and string_func () (name, (param_decls, returning, pure, (code, quiet))) =
+  sprintf "%sfunction%s returning %s (%s) = %s{ ... }"
+    (if pure then "pure " else "")
     (match name with None -> "" | Some name -> " " ^ name)
     (match returning with RetExpr -> "expression"
                         | RetString -> "string"

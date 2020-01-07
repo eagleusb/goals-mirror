@@ -21,6 +21,8 @@ open Printf
 
 open Utils
 
+let pure_cache = Hashtbl.create 13
+
 let rec to_constant env = function
   | Ast.EConstant (loc, c) -> c
 
@@ -213,7 +215,7 @@ and evaluate_goal_arg env = function
  * function by running the associated shell script and parsing
  * the output as an expression, string or list of strings.
  *)
-and call_function env loc name args (params, returning, code) =
+and call_function env loc name args (params, returning, pure, code) =
   (* This is used to print the function in debug and error messages only. *)
   let debug_func =
     sprintf "%s (%s) returning %s" name
@@ -238,6 +240,10 @@ and call_function env loc name args (params, returning, code) =
           (List.length params) (List.length args) in
     List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
 
+  if pure then call_function_pure env loc name returning code
+  else call_function_really env loc name returning code
+
+and call_function_really env loc name returning code =
   let r, b = run_code env loc code in
   if r <> 0 then (
     eprintf "*** function ‘%s’ failed with exit code %d\n" name r;
@@ -259,3 +265,23 @@ and call_function env loc name args (params, returning, code) =
      let strs = List.rev strs in
      let strs = List.map (fun s -> Ast.EConstant (loc, Ast.CString s)) strs in
      EList (loc, strs)
+
+(* For pure functions, check if the function can be matched to
+ * a previously memoized result, but don't fail if this goes wrong.
+ *)
+and call_function_pure env loc name returning code =
+  let code_key =
+    try Some (to_shell_script env loc (fst code))
+    with Failure _ -> None in
+  match code_key with
+  | None -> call_function_really env loc name returning code
+  | Some code_key ->
+     let r =
+       try Some (Hashtbl.find pure_cache code_key)
+       with Not_found -> None in
+     match r with
+     | Some expr -> expr
+     | None ->
+        let expr = call_function_really env loc name returning code in
+        Hashtbl.add pure_cache code_key expr;
+        expr

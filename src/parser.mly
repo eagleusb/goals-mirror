@@ -74,6 +74,7 @@ let do_include env loc filename optflag file =
 %token LEFT_PAREN
 %token LET
 %token OPTINCLUDE
+%token PURE
 %token RETURNING
 %token RIGHT_ARRAY
 %token RIGHT_PAREN
@@ -117,9 +118,9 @@ stmt:
       let name, params = $1 in
       name, Ast.EGoalDefn ($loc, (params, [], [], Some $2))
     }
-    | FUNCTION ID params_decl return_decl EQUALS CODE
+    | option(PURE) FUNCTION ID params_decl return_decl EQUALS CODE
     {
-      $2, Ast.EFuncDefn ($loc, ($3, $4, $6))
+      $3, Ast.EFuncDefn ($loc, ($4, $5, $1 <> None, $7))
     }
     | TACTIC_KEYWORD TACTIC params_decl EQUALS CODE
     {
