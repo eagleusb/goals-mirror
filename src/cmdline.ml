@@ -89,9 +89,9 @@ let input_file,
   let args = List.rev !args in
   let debug_flag = !debug_flag in
   let directory = !directory in
-  let input_file = absolute_path !input_file in
+  let input_file = !input_file in
   (* Don't reverse includes - we want newer -I options to take precedence. *)
-  let includes = List.map absolute_path !includes in
+  let includes = !includes in
   let use_prelude = !use_prelude in
 
   (* Get the anon var assignments and targets. *)

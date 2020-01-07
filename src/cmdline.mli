@@ -27,8 +27,7 @@ val prelude_sh_file : string
 (** Get the absolute path of the prelude.sh file. *)
 
 val input_file : string
-(** Get the name of the input Goalfile.
-    This is an absolute path. *)
+(** Get the name of the input Goalfile. *)
 
 val debug : ('a, unit, string, unit) format4 -> 'a
 (** If debugging is enabled (-d option) then print the formatted
@@ -41,8 +40,7 @@ val directory : string
 (** Get the name of working directory (-C option). *)
 
 val includes : string list
-(** Get list of include directories (-I option).
-    These are all absolute paths. *)
+(** Get list of include directories (-I option). *)
 
 val use_prelude : bool
 (** True if we should load the prelude, or false if --no-prelude. *)
