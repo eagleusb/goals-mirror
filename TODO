@@ -34,3 +34,8 @@ Code should be an expression, eg this ought to work:
 let foo = { echo "hello" }
 and/or anonymous functions:
 let foo = function (arg) { ... }
+
+Infinite loop when you have this goal:
+goal pod2man (page, section) = "docs/%page.%section" : "docs/%page.pod" { ... }
+This is caused by %section matching "pod" so the rule is called
+again, even if the local file docs/%page.pod actually exists.

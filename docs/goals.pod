@@ -1,0 +1,102 @@
+=encoding utf8
+
+=head1 NAME
+
+goals - an experimental tool that generalizes "make"
+
+=head1 SUMMARY
+
+ goals ['TARGET'] ['VAR=VALUE']
+       [-C|--directory DIRECTORY] [-d] [-f|--file Goalfile]
+       [-I|--include DIRECTORY] [--no-prelude]
+
+ goals --help
+
+ goals -v|--version
+
+=head1 DESCRIPTION
+
+
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-h>
+
+=item B<--help>
+
+Display short help summary and exit.
+
+=item B<-C> DIRECTORY
+
+=item B<--directory> DIRECTORY
+
+When goals starts up, and before reading the initial F<Goalfile> or
+doing any other processing, goals changes directory.
+
+=item B<-d>
+
+Enable very verbose debugging.
+
+=item B<-f> GOALFILE
+
+=item B<--file> GOALFILE
+
+Set the name of the initial goal file to read.  The default name is
+F<Goalfile>.
+
+Note that if a relative path is given here, it is relative to the
+directory specified with the I<-C> option, or to the current directory
+if I<-C> was not used.
+
+=item B<-I> DIRECTORY
+
+=item B<--include> DIRECTORY
+
+Specify an include directory, used when including goal files using the
+C<include> directive.  You can use this option multiple times.  Later
+directories have priority over earlier ones.  There is also an
+implicit C<%stdlib> directory which is used for prelude files (see
+L<goals-reference(5)>).
+
+Note that if a relative path is given here, it is relative to the
+directory specified with the I<-C> option, or to the current directory
+if I<-C> was not used.
+
+=item B<--no-prelude>
+
+Do not load F<prelude.gl> from C<%stdlib>.  The default is that the
+prelude is always loaded automatically before any initial goal file
+(but you can redefine prelude definitions in your goal file if you
+want).
+
+=back
+
+=head1 SEE ALSO
+
+L<Goalfile(5)>, L<goals-reference(5)>, L<make(1)>.
+
+=head1 AUTHORS
+
+Richard W.M. Jones <rjones@redhat.com>
+
+=head1 COPYRIGHT
+
+Copyright (C) 2020 Richard W.M. Jones
+
+Copyright (C) 2020 Red Hat Inc.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.

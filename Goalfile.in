@@ -18,6 +18,38 @@
 
 include "ocaml.gl"
 
+let subdirs = [ "m4", "src", "stdlib", "docs", "tests" ]
+
+goal all = : "Goalfile", tool, documentation;
+
+"Goalfile": "Goalfile.in", "config.status" {
+    ./config.status %@
+}
+"src/config.ml" : "src/config.ml.in", "config.status" {
+    ./config.status %@
+}
+
+goal clean = {
+    for d in %subdirs; do
+        pushd $d
+        rm -f *~
+        rm -f *.cmi *.cmo *.cmx *.o
+        popd
+    done
+    rm -f src/parser.ml src/parser.mli src/lexer.ml src/parser.conflicts
+    rm -f docs/*.1
+
+    # We don't delete src/goals because it is required to do builds.
+    # If you want to really delete it, use the maintainer-clean rule.
+}
+
+goal maintainer-clean = : clean {
+    rm -f src/goals
+}
+
+#----------------------------------------------------------------------
+# Build the goals tool itself.
+
 let MENHIR = "@MENHIR@"
 let OCAMLDEP = "@OCAMLDEP@"
 let OCAMLFIND = "@OCAMLFIND@"
@@ -29,6 +61,7 @@ let OCAMLPACKAGES = [ "-package", "str,unix", "-I", "src" ]
 #let OCAMLPACKAGES = "@OCAMLPACKAGES@"
 
 let objects = [
+    # These must be in dependency order.
     "src/config.cmx",
     "src/utils.cmx",
     "src/cmdline.cmx",
@@ -41,27 +74,9 @@ let objects = [
     "src/main.cmx"
 ]
 
-let subdirs = [ "m4", "src", "stdlib", "tests" ]
+goal tool = : ocaml_link ("src/goals", objects) ;
 
-goal all = : "Goalfile", ocaml_link ("src/goals", objects)
-
-goal clean = {
-    for d in %subdirs; do
-        pushd $d
-        rm -f *~
-        rm -f *.cmi *.cmo *.cmx *.o
-        popd
-    done
-    rm -f src/parser.ml src/parser.mli src/lexer.ml src/parser.conflicts
-
-    # We don't delete src/goals because it is required to do builds.
-    # If you want to really delete it, use the maintainer-clean rule.
-}
-
-goal maintainer-clean = : clean {
-    rm -f src/goals
-}
-
+# Parser.
 "src/parser.mli", "src/parser.ml" : "src/parser.mly" {
     %MENHIR --explain %<
     # Hack required to break circular dependencies.
@@ -76,7 +91,7 @@ goal maintainer-clean = : clean {
 # XXX Goalfile itself depends on this and we should probably have a
 # way to reevaluate it.
 # XXX Atomic output.
-goal depend () =
+goal depend =
 "src/.depend" : wildcard ("src/*.ml"), wildcard ("src/*.mli") {
     rm -f %@ %@-t
     # Like many existing tools, ocamldep produces make-compatible
@@ -90,9 +105,19 @@ goal depend () =
 
 -include "src/.depend";
 
-"Goalfile": "Goalfile.in", "config.status" {
-    ./config.status %@
-}
-"src/config.ml" : "src/config.ml.in", "config.status" {
-    ./config.status %@
+#----------------------------------------------------------------------
+# Documentation.
+
+let POD2MAN = "@POD2MAN@"
+
+goal documentation = : pod2man ("goals")
+
+goal pod2man (page) =
+"docs/%page.1" : "docs/%page.pod" {
+    rm -f %@ %@-t
+    %POD2MAN \
+        -c "goals" \
+        --release "@PACKAGE_NAME@-@PACKAGE_VERSION@" \
+        --section 1 %< > %@-t
+    mv %@-t %@
 }

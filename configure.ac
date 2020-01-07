@@ -49,6 +49,10 @@ AC_CHECK_PROG(MENHIR, [menhir], [menhir], [
     AC_MSG_ERROR([OCaml menhir parser generator is required])
 ])
 
+AC_CHECK_PROG([POD2MAN], [pod2man], [pod2man], [
+    AC_MSG_ERROR([pod2man tool from Perl is required])
+])
+
 dnl Substitute OCaml flags and packages.
 AC_SUBST([OCAMLFLAGS], ["-g -safe-string -warn-error CDEFLMPSUVYZX+52-3"])
 AC_SUBST([OCAMLPACKAGES], ["-package str,unix"])

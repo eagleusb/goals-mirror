@@ -6,6 +6,8 @@
 *.cmxa
 *.o
 
+/docs/*.1
+
 .depend
 Goalfile
 Makefile
