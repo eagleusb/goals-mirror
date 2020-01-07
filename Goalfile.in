@@ -116,6 +116,7 @@ goal pod2man (page) =
 "docs/%page.1" : "docs/%page.pod" {
     rm -f %@ %@-t
     %POD2MAN \
+        -u \
         -c "goals" \
         --release "@PACKAGE_NAME@-@PACKAGE_VERSION@" \
         --section 1 %< > %@-t
