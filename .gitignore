@@ -6,7 +6,7 @@
 *.cmxa
 *.o
 
-/docs/*.1
+/man/*.?
 
 .depend
 Goalfile

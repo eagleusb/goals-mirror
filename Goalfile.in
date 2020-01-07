@@ -18,7 +18,7 @@
 
 include "ocaml.gl"
 
-let subdirs = [ "m4", "src", "stdlib", "docs", "tests" ]
+let subdirs = [ "m4", "src", "stdlib", "docs", "man", "tests" ]
 
 goal all = : "Goalfile", tool, documentation;
 
@@ -110,15 +110,15 @@ goal depend =
 
 let POD2MAN = "@POD2MAN@"
 
-goal documentation = : pod2man ("goals")
+goal documentation = : pod2man ("goals", "1")
 
-goal pod2man (page) =
-"docs/%page.1" : "docs/%page.pod" {
+goal pod2man (page, section) =
+"man/%page.%section" : "docs/%page.pod" {
     rm -f %@ %@-t
     %POD2MAN \
         -u \
         -c "goals" \
         --release "@PACKAGE_NAME@-@PACKAGE_VERSION@" \
-        --section 1 %< > %@-t
+        --section %section %< > %@-t
     mv %@-t %@
 }
