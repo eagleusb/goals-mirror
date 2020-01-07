@@ -1,0 +1,131 @@
+Goals, an experimental tool that generalizes "make"
+======================================================================
+
+
+Description
+-----------
+
+Make is a clever tool for expressing dependencies between files and it
+is widely used for building software.  But it has some limitations.
+It only knows about files.  It has limited ways to write rules.  And
+for a tool whose main job is running shell commands, there are several
+gotchas when you actually write shell commands.
+
+Goals is an experimental tool which aims to generalize make beyond
+these limitations.  It works for any resource, not just files:
+
+  *url("https://example.com/uploads/software.tar.gz";) : "software.tar.gz" {
+    scp %< example.com:/web/uploads/
+  }
+
+(You can write your own "tactics" like the *url in the example above).
+Goal recipes can be named, and can be called either by name or by
+automatically finding a matching tactic:
+
+  goal rebuild (pkg) = "%pkg.o" : "%pkg.c" { %CC %CFLAGS -c %< -o %@ }
+
+  goal link () = "prog" : "foo.o", "bar.o", rebuild ("baz") {...}
+  #                        ▲         ▲       ▲
+  #                        │         │       │
+  #                        │         │     called by goal name
+  #            called by pattern matching
+
+Make has many built in functions, but in goals these can easily be
+written in the goals language as shell scripts, making it very
+extensible.  In fact goals consists of a core parser written natively,
+and a large amount of library code written in the goals language and
+shell script.  For example the equivalent of the make built in
+$(wildcard) function is:
+
+  function wildcard (wc) returning strings = @{
+    shopt -s nullglob
+    wc=%wc  ;# needed because of quoting
+    for f in $wc; do
+      echo "$f"
+    done
+  }
+
+You can combine this into fairly complex recipes.  This is the outline
+Goalfile for doing a mass rebuild of Perl packages in dependency order
+in the Fedora build system (called Koji):
+
+  pure function all-perl-packages () = {
+    cd %HOME/fedora
+    echo '['
+    for f in perl*; do
+      test -f $f/$f.spec && echo '    *built-in-koji("'$f'"),'
+    done
+    echo ']'
+  }
+
+  goal rebuild (name) =
+  *built-in-koji ("%name") : build-requires (name) {
+    cd %HOME/fedora/%name
+    rpmdev-bumpspec %name.spec
+    fedpkg commit -c
+    fedpkg push
+    fedpkg build
+  }
+
+  pure function build-requires (name) = {
+    # shell commands to examine spec file and derive list of
+    # source BuildRequires
+  }
+
+  tactic *built-in-koji (name) = {
+    # shell commands to check if latest NVR of %name from the spec
+    # file matches the latest successful build in Koji
+  }
+
+  goal all () = : all-perl-packages ()
+
+The tool aims to retain some of the good properties of make, such as
+relative ease of use for simple things, and being interruptible.
+
+
+Compiling and running from source
+---------------------------------
+
+Requirements:
+
+ - OCaml compiler
+
+ - ocamllex (usually included with the OCaml compiler)
+
+ - ocaml findlib
+
+ - menhir (an OCaml-based parser generator)
+
+ - pod2man (part of Perl, for generating documentation)
+
+ - autoconf and automake
+
+To build from git:
+
+$ ./autogen.sh
+$ make depend
+$ make
+
+You don't need to install goals if you don't want to.  You can run it
+from the source directory using the ‘run’ script in the top level
+directory, eg:
+
+some-project$ ../goals/run goals all
+
+Note that goals uses itself to bootstrap.  This can cause problems
+when developing if you break goals so it can no longer parse its own
+files.  If you get into this situation then do:
+
+$ rm src/goals
+$ make src/goals
+
+
+Development, bugs, patches, feedback
+------------------------------------
+
+Git repo is:
+http://git.annexia.org/?p=goals.git
+
+List of known bugs or missing features is in the TODO file.
+
+There is no bug tracker yet.  For the moment, email rjones@redhat.com
