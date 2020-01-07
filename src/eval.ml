@@ -186,6 +186,7 @@ and run_code_to_string_list env loc code =
   i, lines
 
 and prepare_code env loc (code, quiet) =
+  let quiet = if Cmdline.debug_flag then false else quiet in
   let code = to_shell_script env loc code in
   "source " ^ Filename.quote Cmdline.prelude_sh_file ^ "\n" ^
   "set -e\n" ^
