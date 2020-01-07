@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-goals - an experimental tool that generalizes "make"
+goals - an experimental tool that generalizes “make”
 
 =head1 SUMMARY
 
@@ -16,7 +16,19 @@ goals - an experimental tool that generalizes "make"
 
 =head1 DESCRIPTION
 
+Goals is a command line tool similar in concept to L<make(1)> — a way
+to express dependencies between tasks that need to be done.  Goals
+generalizes make so it can express dependencies between not just files
+but anything such as URLs, remote files, remote builds and more.  It
+is also very extensible using only shell scripting, and it fixes many
+problems that make suffers from.
 
+This manual page documents the command line tool and options.
+
+There is an introduction and tutorial on writing goal files:
+L<Goalfile(5)>.
+
+There is also a reference manual: L<goals-reference(5)>.
 
 =head1 OPTIONS
 
