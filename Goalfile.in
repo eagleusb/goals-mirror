@@ -37,7 +37,7 @@ goal clean = {
         popd
     done
     rm -f src/parser.ml src/parser.mli src/lexer.ml src/parser.conflicts
-    rm -f docs/*.1
+    rm -f man/*.1 man/*.5
 
     # We don't delete src/goals because it is required to do builds.
     # If you want to really delete it, use the maintainer-clean rule.
