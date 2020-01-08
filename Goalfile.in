@@ -118,6 +118,7 @@ goal documentation = : pod2man ("goals", "1"),
 goal pod2man (page, section) =
 "man/%page.%section" : "docs/%page.pod" {
     rm -f %@ %@-t
+    mkdir -p man
     %POD2MAN \
         -u \
         -c "goals" \
