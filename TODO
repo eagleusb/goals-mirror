@@ -13,7 +13,7 @@ timestamp changes (what about non-*files?).  Also: atomic code.  This
 will delete the target if the code doesn't run to completion.  (make
 doesn't do this, but probably it should).
 
-Implement parallel builds.
+Parallel builds: On failure, wait for other jobs to finish.
 
 Conditional sections (same as "ifeq" etc in make).
 
