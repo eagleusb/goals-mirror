@@ -8,7 +8,7 @@ goals - an experimental tool that generalizes “make”
 
  goals ['TARGET'] ['VAR=VALUE']
        [-C|--directory DIRECTORY] [-d] [-f|--file Goalfile]
-       [-I|--include DIRECTORY] [--no-prelude]
+       [-I|--include DIRECTORY] [-j|--jobs JOBS] [--no-prelude]
 
  goals --help
 
@@ -75,6 +75,15 @@ L<goals-reference(5)>).
 Note that if a relative path is given here, it is relative to the
 directory specified with the I<-C> option, or to the current directory
 if I<-C> was not used.
+
+=item B<-j> JOBS
+
+=item B<--jobs> JOBS
+
+Set the maximum number of commands that can run at the same time.
+Unlike make, goals defaults to running in parallel, setting the
+default to the number of cores on the machine.  To disable parallel
+jobs, you must use S<I<-j 1>>.
 
 =item B<--no-prelude>
 

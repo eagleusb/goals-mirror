@@ -51,13 +51,14 @@ let () =
       Sys.executable_name stdlibdir
 
 let input_file,
-    debug_flag, directory, includes, use_prelude, anon_vars, targets =
+    debug_flag, directory, includes, nr_jobs, use_prelude, anon_vars, targets =
   let args = ref [] in
   let debug_flag = ref false in
   let directory = ref "." in
   let input_file = ref "Goalfile" in
   let includes = ref [stdlibdir] in
   let add_include dir = includes := dir :: !includes in
+  let nr_jobs = ref 4 (* XXX use nproc *) in
   let use_prelude = ref true in
 
   let argspec = [
@@ -75,6 +76,10 @@ let input_file,
                    "dir Add include directory";
     "--include",   Arg.String add_include,
                    "dir Add include directory";
+    "-j",          Arg.Set_int nr_jobs,
+                   "jobs Set number of parallel jobs";
+    "--jobs",      Arg.Set_int nr_jobs,
+                   "jobs Set number of parallel jobs";
     "--no-prelude",Arg.Clear use_prelude,
                    " Do not automatically use prelude.gl from stdlib";
     "-v",          Arg.Unit print_version,
@@ -92,6 +97,9 @@ let input_file,
   let input_file = !input_file in
   (* Don't reverse includes - we want newer -I options to take precedence. *)
   let includes = !includes in
+  let nr_jobs = !nr_jobs in
+  if nr_jobs < 1 then
+    failwithf "%s: -j must be >= 1" Sys.executable_name;
   let use_prelude = !use_prelude in
 
   (* Get the anon var assignments and targets. *)
@@ -109,7 +117,7 @@ let input_file,
     ) anon_vars in
 
   input_file,
-  debug_flag, directory, includes, use_prelude, anon_vars, targets
+  debug_flag, directory, includes, nr_jobs, use_prelude, anon_vars, targets
 
 (* Create the debug function. *)
 let debug fs =

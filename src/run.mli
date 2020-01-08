@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-val run_targets : Ast.env -> Ast.expr list -> unit
+val run_targets_to_completion : Ast.env -> Ast.expr list -> unit
 (** This drives evaluation of the list of target expressions (in
     parallel) until they are complete or we reach an error.  The
     expressions are either a list of dependencies and/or a list of

@@ -21,10 +21,38 @@ open Printf
 
 open Utils
 
-let rec run_targets env exprs =
-  List.iter (run_target env) exprs
+(* Goals uses the goal (name + parameters) as the key to
+ * ensure you cannot have two jobs running at the same time
+ * which would interfere with each other by trying to build
+ * the same target.
+ *)
+module Jobs = Jobs.Make (
+  struct
+    type t = string * Ast.expr list
+    let compare = compare
+    let to_string (name, args) =
+      sprintf "%s (%s)" name
+        (String.concat ", " (List.map (Ast.string_expr ()) args))
+  end
+)
 
-and run_target env = function
+(* Starts the target expressions running and waits for them to complete. *)
+let rec run_targets_to_completion env exprs =
+  let group = Jobs.new_group () in
+  run_targets group env exprs;
+  Jobs.wait group
+
+(* This starts the targets, adding them to the jobs group, but does not
+ * wait for them to complete.
+ *)
+and run_targets group env exprs =
+  List.iter (run_target group env) exprs
+
+(* This starts a single target, adding the (usually single but can
+ * be multiple) jobs to the jobs group.  It does not wait for the
+ * jobs to complete.
+ *)
+and run_target group env = function
   | Ast.EGoalDefn _ | Ast.EFuncDefn _ | Ast.ETacticDefn _ -> assert false
 
   (* Call a goal or function. *)
@@ -32,10 +60,13 @@ and run_target env = function
      let expr = Ast.getvar env loc name in
      (match expr with
       | Ast.EGoalDefn (_, goal) ->
-         run_goal env loc name args goal []
+         let key = name, args in
+         Jobs.start group key (
+           fun () -> run_goal env loc name args goal []
+         )
       | Ast.EFuncDefn (_, func) ->
          let expr = Eval.call_function env loc name args func in
-         run_target env expr
+         run_target group env expr
       | _ ->
          failwithf "%a: tried to call ‘%s’ which is not a goal or a function"
            Ast.string_loc loc name
@@ -47,7 +78,7 @@ and run_target env = function
       * (strings, in future booleans, numbers, etc).
       *)
      let args = List.map (Eval.to_constant env) args in
-     run_tactic env loc name args
+     run_tactic group env loc name args
 
   (* If this is a goal then it's the same as calling goal().  If not
    * then look up the variable and substitute it.
@@ -56,25 +87,25 @@ and run_target env = function
      let expr = Ast.getvar env loc name in
      (match expr with
       | Ast.EGoalDefn (loc, ([], _, _, _)) ->
-         run_target env (Ast.ECall (loc, name, []))
+         run_target group env (Ast.ECall (loc, name, []))
       | EGoalDefn _ ->
          failwithf "%a: cannot call %s() since this goal has parameters"
            Ast.string_loc loc name
       | _ ->
-         run_target env expr
+         run_target group env expr
      )
 
   (* Lists are inlined when found as a target. *)
   | Ast.EList (loc, exprs) ->
-     run_targets env exprs
+     run_targets group env exprs
 
   (* A string (with or without substitutions) implies *file(filename). *)
   | Ast.ESubsts (loc, str) ->
      let str = Eval.substitute env loc str in
-     run_tactic env loc "*file" [Ast.CString str]
+     run_tactic group env loc "*file" [Ast.CString str]
 
   | Ast.EConstant (loc, c) ->
-     run_tactic env loc "*file" [c]
+     run_tactic group env loc "*file" [c]
 
 (* Run a goal by name. *)
 and run_goal env loc name args (params, patterns, deps, code) extra_deps =
@@ -102,8 +133,10 @@ and run_goal env loc name args (params, patterns, deps, code) extra_deps =
           (List.length params) (List.length args) in
     List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
 
-  (* Check all dependencies have been updated. *)
-  run_targets env (deps @ extra_deps);
+  (* Check all dependencies have been updated.  We must wait
+   * for these to complete before we can continue.
+   *)
+  run_targets_to_completion env (deps @ extra_deps);
 
   (* Check if any target (ie. pattern) needs to be rebuilt.
    * As with make, a goal with no targets is always run.
@@ -199,10 +232,10 @@ and needs_rebuild env loc deps extra_deps pattern =
        exit 1
      )
 
-(* Find the goal which matches the given tactic and run it.
+(* Find the goal which matches the given tactic and start it.
  * cargs is a list of parameters (all constants).
  *)
-and run_tactic env loc tactic cargs =
+and run_tactic group env loc tactic cargs =
   (* This is used to print the tactic in debug and error messages only. *)
   let debug_tactic =
     Ast.string_expr ()
@@ -249,7 +282,10 @@ and run_tactic env loc tactic cargs =
 
   | [_, name, goal, args] ->
      (* Single goal matches, run it. *)
-     run_goal env loc name args goal []
+     let key = name, args in
+     Jobs.start group key (
+       fun () -> run_goal env loc name args goal []
+     )
 
   | goals ->
      (* Two or more goals match.  Only one must have a CODE section,
@@ -286,7 +322,10 @@ and run_tactic env loc tactic cargs =
           failwithf "%a: multiple goals found which match tactic %s, but more than one of these goals have {code} sections which is not allowed"
             Ast.string_loc loc debug_tactic in
 
-     run_goal env loc name args goal extra_deps
+     let key = name, args in
+     Jobs.start group key (fun () ->
+       run_goal env loc name args goal extra_deps
+     )
 
 (* Test if pattern matches *tactic(cargs).  If it does
  * then we return Some args where args is the arguments that must

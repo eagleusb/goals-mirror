@@ -75,7 +75,7 @@ let main () =
     Ast.print_env stderr env;
 
   (* Run the target expressions. *)
-  Run.run_targets env targets
+  Run.run_targets_to_completion env targets
 
 let () =
   try main ()

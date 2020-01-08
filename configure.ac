@@ -55,7 +55,7 @@ AC_CHECK_PROG([POD2MAN], [pod2man], [pod2man], [
 
 dnl Substitute OCaml flags and packages.
 AC_SUBST([OCAMLFLAGS], ["-g -safe-string -warn-error CDEFLMPSUVYZX+52-3"])
-AC_SUBST([OCAMLPACKAGES], ["-package str,unix"])
+AC_SUBST([OCAMLPACKAGES], ["-package str,unix,threads -thread"])
 
 dnl Produce output files.
 AC_CONFIG_HEADERS([config.h])

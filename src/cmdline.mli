@@ -42,6 +42,9 @@ val directory : string
 val includes : string list
 (** Get list of include directories (-I option). *)
 
+val nr_jobs : int
+(** Number of jobs (-j option). *)
+
 val use_prelude : bool
 (** True if we should load the prelude, or false if --no-prelude. *)
 
