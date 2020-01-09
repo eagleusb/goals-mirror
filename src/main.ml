@@ -81,4 +81,6 @@ let () =
   try main ()
   with
     Failure msg | Sys_error msg ->
-      prerr_endline ("error: " ^ msg); exit 1
+      Run.stop_all ();
+      prerr_endline ("*** error: " ^ msg);
+      exit 1

@@ -29,6 +29,7 @@ module type Jobs = sig
   val new_group : unit -> group
   val start : group -> key -> (unit -> unit) -> unit
   val wait : group -> unit
+  val stop_all : unit -> unit
 end
 
 module Make (K : Key) = struct
@@ -79,12 +80,17 @@ module Make (K : Key) = struct
    *)
   let ready = ref 1
 
+  (* If stop_all is called, this is set to true and we stop
+   * running new jobs.
+   *)
+  let stop = ref false
+
   (* The worker thread. *)
   let rec worker _ =
     let id = Thread.id (Thread.self ()) in
     Mutex.lock lock;
     incr ready;
-    while !ready <= Cmdline.nr_jobs do
+    while not !stop && !ready <= Cmdline.nr_jobs do
       (* See if there's any queue with a job which is ready to run. *)
       Cmdline.debug "thread %d: checking for a runnable queue" id;
       match get_runnable_queue () with
@@ -184,5 +190,14 @@ module Make (K : Key) = struct
    * the lock.
    *)
   and all_done group = List.for_all (fun { state } -> state = Done) !group
+
+  let stop_all () =
+    Mutex.lock lock;
+    (* All threads will exit after running jobs if this is set. *)
+    stop := true;
+    while !ready > 1 do
+      Condition.wait idle lock;
+    done;
+    Mutex.unlock lock
 
 end

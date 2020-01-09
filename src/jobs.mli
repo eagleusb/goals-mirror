@@ -61,6 +61,11 @@ module type Jobs = sig
 
   val wait : group -> unit
   (** [wait group] waits for all of the jobs in the group to finish. *)
+
+  val stop_all : unit -> unit
+  (** This is used when goals exits with an error.  All jobs which
+      are waiting to run are deleted, and we wait for all running
+      jobs to finish. *)
 end
 
 module Make (K : Key) : Jobs with type key = K.t

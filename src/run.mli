@@ -22,3 +22,7 @@ val run_targets_to_completion : Ast.env -> Ast.expr list -> unit
     parallel) until they are complete or we reach an error.  The
     expressions are either a list of dependencies and/or a list of
     initial targets. *)
+
+val stop_all : unit -> unit
+(** Wait until all running jobs finish, and don't start any new ones.
+    See [Jobs.stop_all]. *)

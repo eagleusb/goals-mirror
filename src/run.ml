@@ -36,6 +36,8 @@ module Jobs = Jobs.Make (
   end
 )
 
+let stop_all = Jobs.stop_all
+
 (* Starts the target expressions running and waits for them to complete. *)
 let rec run_targets_to_completion env exprs =
   let group = Jobs.new_group () in
