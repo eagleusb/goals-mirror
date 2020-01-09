@@ -17,15 +17,15 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-open Lexer
 open Lexing
-
 open Printf
 
-let print_position fp lexbuf =
+open Utils
+open Lexer
+
+let string_position () lexbuf =
   let pos = lexbuf.lex_curr_p in
-  fprintf fp "%s:%d:%d"
-    pos.pos_fname pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
+  sprintf "%s:%d:%d" pos.pos_fname pos.pos_lnum (pos.pos_cnum - pos.pos_bol)
 
 let parse_file env lexbuf =
   try
@@ -33,21 +33,17 @@ let parse_file env lexbuf =
     Ast.Env.merge env env'
   with
   | SyntaxError msg ->
-     eprintf "%a: %s\n" print_position lexbuf msg;
-     exit 1
+     failwithf "%a: %s" string_position lexbuf msg
   | Parser.Error ->
-     eprintf "%a: parse error\n" print_position lexbuf;
-     exit 1
+     failwithf "%a: parse error" string_position lexbuf
 
 let parse_expr lexbuf =
   try Parser.expr Lexer.read lexbuf
   with
   | SyntaxError msg ->
-     eprintf "%a: %s\n" print_position lexbuf msg;
-     exit 1
+     failwithf "%a: %s" string_position lexbuf msg
   | Parser.Error ->
-     eprintf "%a: parse error\n" print_position lexbuf;
-     exit 1
+     failwithf "%a: parse error" string_position lexbuf
 
 (* This is used to parse the Goalfile. *)
 let parse_goalfile env filename =

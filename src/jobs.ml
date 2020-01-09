@@ -90,7 +90,7 @@ module Make (K : Key) = struct
     let id = Thread.id (Thread.self ()) in
     Mutex.lock lock;
     incr ready;
-    while not !stop && !ready <= Cmdline.nr_jobs do
+    while not !stop && !ready <= Cmdline.nr_jobs () do
       (* See if there's any queue with a job which is ready to run. *)
       Cmdline.debug "thread %d: checking for a runnable queue" id;
       match get_runnable_queue () with
@@ -176,7 +176,7 @@ module Make (K : Key) = struct
     while not (all_done group); do
       decr ready;
       (* Start more threads if fewer than nr_jobs threads are ready. *)
-      let needed = Cmdline.nr_jobs - !ready in
+      let needed = Cmdline.nr_jobs () - !ready in
       if needed > 0 then
         ignore (Array.init needed (Thread.create worker));
 

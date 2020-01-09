@@ -17,6 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
+val parse : unit -> (string * string) list * string list
+(** Parse the command line.
+    Returns two lists:
+    anon_vars = List of anonymous variable assignments.
+    targets = List of target expressions on the command line. *)
+
 val stdlibdir : string
 (** Get the stdlib directory. *)
 
@@ -26,30 +32,24 @@ val prelude_gl_file : string
 val prelude_sh_file : string
 (** Get the absolute path of the prelude.sh file. *)
 
-val input_file : string
+val input_file : unit -> string
 (** Get the name of the input Goalfile. *)
 
 val debug : ('a, unit, string, unit) format4 -> 'a
 (** If debugging is enabled (-d option) then print the formatted
     output.  If debugging was not enabled then nothing is printed. *)
 
-val debug_flag : bool
+val debug_flag : unit -> bool
 (** If debugging is enabled. *)
 
-val directory : string
+val directory : unit -> string
 (** Get the name of working directory (-C option). *)
 
-val includes : string list
+val includes : unit -> string list
 (** Get list of include directories (-I option). *)
 
-val nr_jobs : int
+val nr_jobs : unit -> int
 (** Number of jobs (-j option). *)
 
-val use_prelude : bool
+val use_prelude : unit -> bool
 (** True if we should load the prelude, or false if --no-prelude. *)
-
-val anon_vars : (string * string) list
-(** List of anonymous variable assignments on the command line. *)
-
-val targets : string list
-(** List of target expressions on the command line. *)

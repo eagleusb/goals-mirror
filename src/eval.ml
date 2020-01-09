@@ -186,7 +186,7 @@ and run_code_to_string_list env loc code =
   i, lines
 
 and prepare_code env loc (code, quiet) =
-  let quiet = if Cmdline.debug_flag then false else quiet in
+  let quiet = if Cmdline.debug_flag () then false else quiet in
   let code = to_shell_script env loc code in
   "source " ^ Filename.quote Cmdline.prelude_sh_file ^ "\n" ^
   "set -e\n" ^
@@ -270,18 +270,14 @@ and call_function_really env loc name returning code =
   match returning with
   | RetExpr ->
      let r, b = run_code_to_string env loc code in
-     if r <> 0 then (
-       eprintf "*** function ‘%s’ failed with exit code %d\n" name r;
-       exit 1
-     );
+     if r <> 0 then
+       failwithf "function ‘%s’ failed with exit code %d" name r;
      Parse.parse_expr (sprintf "function:%s" name) b
 
   | RetString ->
      let r, b = run_code_to_string env loc code in
-     if r <> 0 then (
-       eprintf "*** function ‘%s’ failed with exit code %d\n" name r;
-       exit 1
-     );
+     if r <> 0 then
+       failwithf "function ‘%s’ failed with exit code %d" name r;
      Ast.EConstant (loc, Ast.CString b)
 
   | RetStrings ->

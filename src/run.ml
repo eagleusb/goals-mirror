@@ -168,10 +168,8 @@ and run_goal env loc name args (params, patterns, deps, code) extra_deps =
           | [] -> env
           | d :: _ -> Ast.Env.add "^" d env in
         let r = Eval.run_code env loc code in
-        if r <> 0 then (
-          eprintf "*** goal ‘%s’ failed with exit code %d\n" name r;
-          exit 1
-        );
+        if r <> 0 then
+          failwithf "goal ‘%s’ failed with exit code %d" name r;
 
         (* Check all targets were updated after the code was
          * run (else it's an error).
@@ -229,10 +227,8 @@ and needs_rebuild env loc deps extra_deps pattern =
      let r = Eval.run_code env loc code in
      if r = 99 (* means "needs rebuild" *) then true
      else if r = 0 (* means "doesn't need rebuild" *) then false
-     else (
-       eprintf "*** tactic ‘%s’ failed with exit code %d\n" tactic r;
-       exit 1
-     )
+     else
+       failwithf "tactic ‘%s’ failed with exit code %d" tactic r
 
 (* Find the goal which matches the given tactic and start it.
  * cargs is a list of parameters (all constants).

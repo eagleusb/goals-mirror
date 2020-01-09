@@ -45,21 +45,19 @@ let datadir =
 let stdlibdir = datadir // "stdlib"
 let prelude_gl_file = stdlibdir // "prelude.gl"
 let prelude_sh_file = stdlibdir // "prelude.sh"
-let () =
+
+let debug_flag = ref false
+let directory = ref "."
+let input_file = ref "Goalfile"
+let includes = ref [stdlibdir]
+let add_include dir = includes := dir :: !includes
+let nr_jobs = ref 4 (* XXX use nproc *)
+let use_prelude = ref true
+
+let parse () =
   if not (is_directory stdlibdir) || not (Sys.file_exists prelude_gl_file) then
     failwithf "%s: cannot find the standard library directory, expected %s.  If the standard library directory is in a non-standard location then set GOALS_DATADIR.  If you can trying to run goals from the build directory then use ‘./run goals ...’"
-      Sys.executable_name stdlibdir
-
-let input_file,
-    debug_flag, directory, includes, nr_jobs, use_prelude, anon_vars, targets =
-  let args = ref [] in
-  let debug_flag = ref false in
-  let directory = ref "." in
-  let input_file = ref "Goalfile" in
-  let includes = ref [stdlibdir] in
-  let add_include dir = includes := dir :: !includes in
-  let nr_jobs = ref 4 (* XXX use nproc *) in
-  let use_prelude = ref true in
+      Sys.executable_name stdlibdir;
 
   let argspec = [
     "-C",          Arg.Set_string directory,
@@ -88,19 +86,15 @@ let input_file,
                    " Print version and exit";
   ] in
   let argspec = Arg.align argspec in
+  let args = ref [] in
   let anon_fun s = args := s :: !args in
   Arg.parse argspec anon_fun usage;
 
-  let args = List.rev !args in
-  let debug_flag = !debug_flag in
-  let directory = !directory in
-  let input_file = !input_file in
-  (* Don't reverse includes - we want newer -I options to take precedence. *)
-  let includes = !includes in
-  let nr_jobs = !nr_jobs in
-  if nr_jobs < 1 then
+  (* Check various params are sensible. *)
+  if !nr_jobs < 1 then
     failwithf "%s: -j must be >= 1" Sys.executable_name;
-  let use_prelude = !use_prelude in
+
+  let args = List.rev !args in
 
   (* Get the anon var assignments and targets. *)
   let anon_vars, targets =
@@ -116,10 +110,20 @@ let input_file,
         (name, expr)
     ) anon_vars in
 
-  input_file,
-  debug_flag, directory, includes, nr_jobs, use_prelude, anon_vars, targets
+  anon_vars, targets
+
+let debug_flag () = !debug_flag
 
 (* Create the debug function. *)
 let debug fs =
-  let display str = if debug_flag then prerr_endline str in
+  let display str = if debug_flag () then prerr_endline str in
   ksprintf display fs
+
+let directory () = !directory
+let input_file () = !input_file
+
+(* Don't reverse includes - we want newer -I options to take precedence. *)
+let includes () = !includes
+
+let nr_jobs () = !nr_jobs
+let use_prelude () = !use_prelude

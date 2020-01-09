@@ -27,8 +27,11 @@ let () =
   Parser.eval_substitute := Some Eval.substitute
 
 let main () =
+  (* Handle the command line. *)
+  let anon_vars, targets = Cmdline.parse () in
+
   (* Change directory (-C option). *)
-  Sys.chdir Cmdline.directory;
+  Sys.chdir (Cmdline.directory ());
 
   (* Create the initial environment, containing the system environment
    * and a few other standard strings.
@@ -48,12 +51,12 @@ let main () =
 
   (* Parse the prelude. *)
   let env =
-    if Cmdline.use_prelude then
+    if Cmdline.use_prelude () then
       Parse.parse_goalfile env Cmdline.prelude_gl_file
     else env in
 
   (* Parse the input file. *)
-  let env = Parse.parse_goalfile env Cmdline.input_file in
+  let env = Parse.parse_goalfile env (Cmdline.input_file ()) in
 
   (* Parse the command line assignments. *)
   let env =
@@ -61,17 +64,17 @@ let main () =
       fun env (name, expr) ->
         let expr = Parse.parse_expr "commandline" expr in
         Ast.Env.add name expr env
-    ) env Cmdline.anon_vars in
+    ) env anon_vars in
 
   (* Parse the target expressions. *)
-  let targets = List.map (Parse.parse_expr "commandline") Cmdline.targets in
+  let targets = List.map (Parse.parse_expr "commandline") targets in
 
   (* If no target was set on the command line, use "all ()". *)
   let targets =
     if targets <> [] then targets
     else [Ast.ECall (Ast.noloc, "all", [])] in
 
-  if Cmdline.debug_flag then
+  if Cmdline.debug_flag () then
     Ast.print_env stderr env;
 
   (* Run the target expressions. *)
@@ -80,7 +83,7 @@ let main () =
 let () =
   try main ()
   with
-    Failure msg | Sys_error msg ->
-      Run.stop_all ();
-      prerr_endline ("*** error: " ^ msg);
-      exit 1
+  | Failure msg | Sys_error msg ->
+     Run.stop_all ();
+     prerr_endline ("*** error: " ^ msg);
+     exit 1

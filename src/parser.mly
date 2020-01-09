@@ -38,7 +38,7 @@ let find_on_include_path filename =
          let path = inc // filename in
          if Sys.file_exists path then path else loop incs
     in
-    loop Cmdline.includes
+    loop (Cmdline.includes ())
   )
 
 let do_include env loc filename optflag file =
