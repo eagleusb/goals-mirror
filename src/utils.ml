@@ -24,6 +24,8 @@ let failwithf fs = ksprintf failwith fs
 let (//) = Filename.concat
 let is_directory d = try Sys.is_directory d with Sys_error _ -> false
 
+let unique = let i = ref 0 in fun () -> incr i; !i
+
 (* From OCaml 4.08 sources.  We can remove this when we can
  * depend on min OCaml 4.08.
  *)

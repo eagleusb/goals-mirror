@@ -26,6 +26,9 @@ val (//) : string -> string -> string
 val is_directory : string -> bool
 (** Return true iff parameter is a directory. *)
 
+val unique : unit -> int
+(** Returns a unique number each time called. *)
+
 val filter_map : ('a -> 'b option) -> 'a list -> 'b list
 (** [filter_map f l] applies [f] to every element of [l], filters
     out the [None] elements and returns the list of the arguments of
