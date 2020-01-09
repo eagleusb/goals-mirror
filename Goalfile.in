@@ -71,6 +71,7 @@ let objects = [
     "src/lexer.cmx",
     "src/parse.cmx",
     "src/eval.cmx",
+    "src/deps.cmx",
     "src/run.cmx",
     "src/main.cmx"
 ]

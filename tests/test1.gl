@@ -6,6 +6,8 @@ let foo = "bar"
 
 goal all = : "file1.o", *file("file2.o")
 
+goal clean = { }
+
 goal compile (name) =
 "%name.o" : "%name.c" {
   echo %< "->" %@

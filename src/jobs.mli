@@ -17,55 +17,29 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-(** This module manages parallel jobs.
+(** This module manages parallel jobs. *)
 
-    Jobs are grouped.  You call [new_group] to create a new
-    group of jobs, initially empty.  Then add jobs to it.  Then
-    wait for all the jobs in the group to complete.
+type 'a next = Job of 'a * (unit -> unit) | Complete | Not_ready
 
-    To submit a job to a group use [start group key f].  [group]
-    is an existing group of jobs to which this is added.  [key] is
-    a key which ensures that two identical jobs cannot be running
-    at the same time (across all groups).  If two or more jobs
-    with the same key are submitted then only one will run and
-    the others will wait until the first finishes, and then another
-    will be picked to run and so on.  Jobs with different keys run
-    freely in parallel, assuming there are enough threads available
-    to run them.
+type 'a retire = 'a -> unit
 
-    Goals uses the goal (name + parameters) as the key to
-    ensure you cannot have two jobs running at the same time
-    which would interfere with each other by trying to build
-    the same target.
+type 'a to_string = 'a -> string
 
-    To wait for a group of jobs to complete, call [wait group].
- *)
+val run : (unit -> 'a next) -> 'a retire -> 'a to_string -> unit
+(** [run next_job retire_job] runs jobs in parallel.  [next_job]
+    is called to pick the next available job.  [retire_job] is
+    called when a job finishes successfully.
 
-module type Key = sig
-  type t
-  val compare : t -> t -> int
-  val to_string : t -> string
-end
+    If [next_job] returns [Job f] then that function is started
+    (usually in a thread if -j N > 1).
 
-module type Jobs = sig
-  type key
-  type group
+    If [next_job] returns [Complete] then [run] waits until
+    all parallel jobs are then returns.
 
-  val new_group : unit -> group
-  (** Create a new empty jobs group. *)
+    If [next_job] returns [Not_ready] then [next_job] will be
+    called again after a little while.
 
-  val start : group -> key -> (unit -> unit) -> unit
-  (** [start group key f] submits a job to run in the background.
-      The [key] ensures that two jobs with the same key cannot run
-      at the same time (across all groups). *)
-
-  val wait : group -> unit
-  (** [wait group] waits for all of the jobs in the group to finish. *)
-
-  val stop_all : unit -> unit
-  (** This is used when goals exits with an error.  All jobs which
-      are waiting to run are deleted, and we wait for all running
-      jobs to finish. *)
-end
-
-module Make (K : Key) : Jobs with type key = K.t
+    If any job throws an exception then the exception will be
+    reraised by [run], usually causing goals to exit with an error.
+    The exception is delayed until all currently running jobs
+    finish, but no new jobs will be started during this time. *)

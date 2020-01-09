@@ -77,13 +77,19 @@ let main () =
   if Cmdline.debug_flag () then
     Ast.print_env stderr env;
 
-  (* Run the target expressions. *)
-  Run.run_targets_to_completion env targets
+  (* Construct the dependency DAG with the root(s) being the targets. *)
+  let dag = Deps.create env targets in
+
+  (* Run the jobs. *)
+  let state = Deps.new_state dag Run.goal_runner Run.exists_runner in
+  let next_job () = Deps.next_job state in
+  let retire_job job = Deps.retire_job state job in
+  let string_of_job job = Deps.string_of_job job in
+  Jobs.run next_job retire_job string_of_job
 
 let () =
   try main ()
   with
   | Failure msg | Sys_error msg ->
-     Run.stop_all ();
      prerr_endline ("*** error: " ^ msg);
      exit 1

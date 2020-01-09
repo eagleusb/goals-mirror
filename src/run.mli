@@ -17,12 +17,15 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
-val run_targets_to_completion : Ast.env -> Ast.expr list -> unit
-(** This drives evaluation of the list of target expressions (in
-    parallel) until they are complete or we reach an error.  The
-    expressions are either a list of dependencies and/or a list of
-    initial targets. *)
+val goal_runner : Deps.goal_runner
+(** Run a single goal. *)
 
-val stop_all : unit -> unit
-(** Wait until all running jobs finish, and don't start any new ones.
-    See [Jobs.stop_all]. *)
+val exists_runner : Deps.exists_runner
+(** Run the implicit existence tactic.
+
+    This is used when we find a tactic like *foo(...) but there
+    is no matching goal.  We run (in this callback) the associated
+    tactic code.  As long as it runs successfully, not returning 99 or
+    any error value, then we're OK - the tactic doesn't need rebuilding
+    so the dependency is satisfied.  However if it returns 99 (needs
+    rebuild) or an error then we have to exit with an error. *)
