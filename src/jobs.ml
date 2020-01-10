@@ -52,13 +52,7 @@ let run next_job retire_job string_of_job =
   let rec loop () =
     if !last_exn = None then (
       match next_job () with
-      | Complete ->
-         if !running > 0 then (
-           Cmdline.debug "%d/%d threads running, waiting for completion"
-             !running (Cmdline.nr_jobs ());
-           Condition.wait cond lock;
-           loop ()
-         )
+      | Complete -> ()
       | Not_ready ->
          assert (!running > 0);
          Cmdline.debug "%d/%d threads running, waiting for dependencies"
@@ -80,6 +74,14 @@ let run next_job retire_job string_of_job =
   in
   Mutex.lock lock;
   loop ();
+
+  (* Wait for all jobs to complete. *)
+  while !running > 0 do
+    Cmdline.debug "%d/%d threads running, waiting for completion"
+      !running (Cmdline.nr_jobs ());
+    Condition.wait cond lock
+  done;
+
   let exn = !last_exn in
   Mutex.unlock lock;
 
