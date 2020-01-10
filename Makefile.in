@@ -19,7 +19,7 @@
 # Pass through normal targets to Goalfile.in
 
 # XXX Why can't this parse "all" instead of "all ()"?
-all clean depend install: src/goals
+all clean depend install maintainer-clean: src/goals
 	./run src/goals "$@ ()"
 
 # If src/goals doesn't exist then brute-force build it.  Once we have
