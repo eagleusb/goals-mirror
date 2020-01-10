@@ -127,3 +127,16 @@ goal pod2man (page, section) =
         --section %section %< > %@-t
     mv %@-t %@
 }
+
+#----------------------------------------------------------------------
+# Tests.
+
+let tests = wrap ("test", wildcard ("tests/*.sh"))
+
+goal check () = : tests
+
+goal test (name) = : {
+    t=`basename %name`
+    cd tests
+    ../run ./$t
+}
