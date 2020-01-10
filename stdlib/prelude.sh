@@ -24,5 +24,5 @@
 function quoted_string ()
 {
     # XXX This doesn't actually do quoting XXX
-    echo "\"$1\""
+    echo -n "\"$1\""
 }
