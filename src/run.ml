@@ -54,7 +54,8 @@ let rec goal_runner env loc name args
           | d :: _ -> Ast.Env.add "^" d env in
         let r = Eval.run_code env loc code in
         if r <> 0 then
-          failwithf "goal ‘%s’ failed with exit code %d" name r;
+          failwithf "%a: goal ‘%s’ failed with exit code %d"
+            Ast.string_loc loc debug_goal r;
 
         (* Check all targets were updated after the code was
          * run (else it's an error).
@@ -71,7 +72,7 @@ let rec goal_runner env loc name args
         match pattern_still_needs_rebuild with
         | None -> ()
         | Some pattern ->
-           failwithf "%a: goal %s ran successfully but it did not rebuild %a"
+           failwithf "%a: goal ‘%s’ ran successfully but it did not rebuild %a"
              Ast.string_loc loc debug_goal Ast.string_pattern pattern
     )
   )
@@ -122,11 +123,13 @@ and needs_rebuild ?(final_check = false) env loc deps extra_deps pattern =
      if r = 99 (* means "needs rebuild" *) then true
      else if r = 0 (* means "doesn't need rebuild" *) then false
      else
-       failwithf "tactic ‘%s’ failed with exit code %d" tactic r
+       failwithf "%a: tactic ‘%s’ failed with exit code %d"
+         Ast.string_loc loc tactic r
 
 and exists_runner env loc p debug_tactic =
   Cmdline.debug "%a: running implicit existence rule for tactic %s"
     Ast.string_loc loc debug_tactic;
 
   if needs_rebuild env loc [] [] p then
-    failwithf "%a: don't know how to build %s" Ast.string_loc loc debug_tactic
+    failwithf "%a: don't know how to build ‘%s’"
+      Ast.string_loc loc debug_tactic
