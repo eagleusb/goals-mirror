@@ -38,6 +38,20 @@ tactic *exists (filename) = @{
 }
 
 #----------------------------------------------------------------------
+# Basic functions.
+
+# Wrap list of strings in a call or tactic.
+pure function wrap (wrapper, xs) = @{
+    echo '['
+    for x in %xs; do
+        echo %wrapper "( "
+        quoted_string "$x"
+        echo " ),"
+    done
+    echo ']'
+}
+
+#----------------------------------------------------------------------
 # Text functions.
 
 # Sort + uniq a list.
