@@ -118,6 +118,10 @@ stmt:
       let name, params = $1 in
       name, Ast.EGoalDefn ($loc, (params, [], [], Some $2))
     }
+    | GOAL ID
+    {
+      $2, Ast.EGoalDefn ($loc, ([], [], [], None))
+    }
     | option(PURE) FUNCTION ID params_decl return_decl EQUALS CODE
     {
       $3, Ast.EFuncDefn ($loc, ($4, $5, $1 <> None, $7))
