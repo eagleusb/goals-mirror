@@ -61,7 +61,11 @@ let rec goal_runner env loc name args
          *)
         let pattern_still_needs_rebuild =
           try
-            Some (List.find (needs_rebuild env loc deps extra_deps) patterns)
+            let pattern =
+              List.find
+                (needs_rebuild ~final_check:true env loc deps extra_deps)
+                patterns in
+            Some pattern
           with
             Not_found -> None in
         match pattern_still_needs_rebuild with
@@ -73,7 +77,7 @@ let rec goal_runner env loc name args
   )
 
 (* Return whether the target (pattern) needs to be rebuilt. *)
-and needs_rebuild env loc deps extra_deps pattern =
+and needs_rebuild ?(final_check = false) env loc deps extra_deps pattern =
   Cmdline.debug "%a: testing if %a needs rebuild"
     Ast.string_loc loc Ast.string_pattern pattern;
 
@@ -104,6 +108,11 @@ and needs_rebuild env loc deps extra_deps pattern =
 
      (* Add some standard variables to the environment. *)
      let env = Ast.Env.add "<" (Ast.EList (Ast.noloc, deps)) env in
+     let env =
+       (*let b = Ast.EConstant (Ast.noloc, Ast.CBool final_check) in*)
+       let b = Ast.EConstant (Ast.noloc,
+                              Ast.CString (if final_check then "1" else "")) in
+       Ast.Env.add "goals_final_check" b env in
      let env =
        (* NB: extra_deps are not added to %^ *)
        match deps with
