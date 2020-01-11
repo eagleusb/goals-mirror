@@ -38,7 +38,7 @@ let parse_file env lexbuf =
      failwithf "%a: parse error" string_position lexbuf
 
 let parse_expr lexbuf =
-  try Parser.expr Lexer.read lexbuf
+  try Parser.expr_only Lexer.read lexbuf
   with
   | SyntaxError msg ->
      failwithf "%a: %s" string_position lexbuf msg

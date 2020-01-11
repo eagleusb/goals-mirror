@@ -87,7 +87,7 @@ let do_include env loc filename optflag file =
 
 (* Start nonterminals. *)
 %start <Ast.expr Ast.Env.t> file
-%start <Ast.expr> expr
+%start <Ast.expr> expr_only
 %%
 
 file:
@@ -174,6 +174,13 @@ barelist:
     ;
 params:
     | LEFT_PAREN separated_list(COMMA, expr) RIGHT_PAREN { $2 }
+    ;
+
+(* This is used by Parse.parse_expr where we have to parse
+ * a standalone string (eg. from the command line).
+ *)
+expr_only:
+    | expr EOF   { $1 }
     ;
 
 (* http://gallium.inria.fr/blog/lr-lists/ *)

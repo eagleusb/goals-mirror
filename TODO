@@ -6,8 +6,6 @@ Default parameters, ie:
 You might only allow defaults to be added to the end, or you
 might allow goals to be called with labelled parameters.
 
-Fix: You must use 'all ()' on the command line.
-
 Deleting target files if goals is interrupted, but only if the
 timestamp changes (what about non-*files?).  Also: atomic code.  This
 will delete the target if the code doesn't run to completion.  (make
