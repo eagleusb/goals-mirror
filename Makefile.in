@@ -19,7 +19,7 @@
 # Pass through normal targets to Goalfile.in
 
 all clean depend install check maintainer-clean: src/goals
-	./run src/goals $@
+	@./run src/goals $@
 
 # If src/goals doesn't exist then brute-force build it.  Once we have
 # src/goals we can rebuild it and other parts of the project using
