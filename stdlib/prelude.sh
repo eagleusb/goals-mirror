@@ -26,3 +26,23 @@ function quoted_string ()
     # XXX This doesn't actually do quoting XXX
     echo -n "\"$1\""
 }
+
+# For printing strings in different colours, use these functions.
+function start_red ()
+{
+    echo -ne "\x1b[1;31m"
+}
+
+function start_green ()
+{
+    echo -ne "\x1b[0;32m"
+}
+
+function end_colour ()
+{
+    echo -ne "\x1b[0m"
+}
+function end_color ()
+{
+    echo -ne "\x1b[0m"
+}

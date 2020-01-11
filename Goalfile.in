@@ -38,6 +38,7 @@ goal clean = {
     done
     rm -f src/parser.ml src/parser.mli src/lexer.ml src/parser.conflicts
     rm -f man/*.1 man/*.5
+    rm -f tests/*.log
 
     # We don't delete src/goals because it is required to do builds.
     # If you want to really delete it, use the maintainer-clean rule.
@@ -135,8 +136,19 @@ let tests = wrap ("test", wildcard ("tests/*.sh"))
 
 goal check () = : tests
 
-goal test (name) = : {
+goal test (name) = @{
     t=`basename %name`
     cd tests
-    ../run ./$t
+    if ../run ./$t > $t.log 2>&1; then
+        start_green
+        echo -n "PASS: "
+        end_colour
+        echo $t
+    else
+        start_red
+        echo -n "FAIL: "
+        end_colour
+        echo $t
+        exit 1
+    fi
 }
