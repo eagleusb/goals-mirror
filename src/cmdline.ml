@@ -41,7 +41,8 @@ let print_version () =
 
 (* Get stdlib directory. *)
 let datadir =
-  try Sys.getenv "GOALS_DATADIR" with Not_found -> Config.datadir
+  try Sys.getenv "GOALS_DATADIR"
+  with Not_found -> Config.datadir // "goals"
 let stdlibdir = datadir // "stdlib"
 let prelude_gl_file = stdlibdir // "prelude.gl"
 let prelude_sh_file = stdlibdir // "prelude.sh"

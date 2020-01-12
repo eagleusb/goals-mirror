@@ -153,3 +153,22 @@ goal test (name) = @{
         exit 1
     fi
 }
+
+#----------------------------------------------------------------------
+# Install.
+
+# DESTDIR can be overridden on the command line to install into
+# a subdirectory.
+let DESTDIR = ""
+
+let stdlibfiles = [wildcard ("stdlib/*.gl"), wildcard ("stdlib/*.sh")]
+
+goal install = {
+    # exec_prefix die die die
+    bindir="@prefix@/bin"
+    datadir="@prefix@/share"
+    mkdir -p %DESTDIR/"$bindir"
+    mkdir -p %DESTDIR/"$datadir/goals"
+    install src/goals %DESTDIR/"$bindir" -m 0755
+    install %stdlibfiles %DESTDIR/"$datadir"/goals -m 644
+}
