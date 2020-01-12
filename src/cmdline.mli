@@ -51,5 +51,8 @@ val includes : unit -> string list
 val nr_jobs : unit -> int
 (** Number of jobs (-j option). *)
 
+val silent : unit -> bool
+(** Silent operation (-s option). *)
+
 val use_prelude : unit -> bool
 (** True if we should load the prelude, or false if --no-prelude. *)

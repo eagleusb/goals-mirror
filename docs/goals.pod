@@ -9,6 +9,7 @@ goals - an experimental tool that generalizes “make”
  goals ['TARGET'] ['VAR=VALUE']
        [-C|--directory DIRECTORY] [-d] [-f|--file Goalfile]
        [-I|--include DIRECTORY] [-j|--jobs JOBS] [--no-prelude]
+       [-s|--silent|--quiet]
 
  goals --help
 
@@ -91,6 +92,15 @@ Do not load F<prelude.gl> from C<%stdlib>.  The default is that the
 prelude is always loaded automatically before any initial goal file
 (but you can redefine prelude definitions in your goal file if you
 want).
+
+=item B<-s>
+
+=item B<--silent>
+
+=item B<--quiet>
+
+Don't print the shell commands that are run.  This is the same as
+turning all S<C<{ CODE }>> sections into S<C<@{ CODE }>> sections.
 
 =back
 

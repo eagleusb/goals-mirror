@@ -190,7 +190,7 @@ and prepare_code env loc (code, quiet) =
   let code = to_shell_script env loc code in
   "source " ^ Filename.quote Cmdline.prelude_sh_file ^ "\n" ^
   "set -e\n" ^
-  (if not quiet then "set -x\n" else "") ^
+  (if not (Cmdline.silent ()) && not quiet then "set -x\n" else "") ^
   "\n" ^
   code
 
