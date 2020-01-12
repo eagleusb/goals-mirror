@@ -46,6 +46,24 @@ For example:
 
 Returns the filename extension.
 
+=head3 filter (pattern, list)
+
+For example:
+
+ filter ("a+", ["a", "b", "ca"]) ⇒ ["a", "ca"]
+
+Filter a list returning only the elements that match the extended
+regular expression C<pattern>.
+
+=head3 filter-out (pattern, list)
+
+For example:
+
+ filter-out ("a+", ["a", "b", "ca"]) ⇒ ["b"]
+
+Filter a list returning only the elements that I<do not> match the
+extended regular expression C<pattern>.
+
 =head3 head (list)
 
 For example:

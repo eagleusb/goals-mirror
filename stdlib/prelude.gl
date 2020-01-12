@@ -59,6 +59,16 @@ pure function wrap (wrapper, xs) = @{
 #----------------------------------------------------------------------
 # Text functions.
 
+# Filter a list by regexp.
+pure function filter (pat, xs) returning strings = @{
+    for f in %xs; do echo "$f"; done | grep -E -- %pat
+}
+
+# Filter out a list by regexp.
+pure function filter-out (pat, xs) returning strings = @{
+    for f in %xs; do echo "$f"; done | grep -v -E -- %pat
+}
+
 # Head of a list.
 pure function head (xs) returning string = @{
     for f in %xs; do
