@@ -38,6 +38,16 @@ For example:
 
 Returns the filename extension.
 
+=head3 join (list1, list2)
+
+For example:
+
+ join (["a", "b"], ["c", "d"]) ⇒ ["a", "b", "c", "d"]
+
+Concatenate C<list1> and C<list2>.  It's not usually necessary to use
+this function since goals automatically flattens lists within lists
+into simple lists in many cases.
+
 =head3 sort (list)
 
 For example:

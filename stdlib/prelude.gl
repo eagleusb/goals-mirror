@@ -54,6 +54,11 @@ pure function wrap (wrapper, xs) = @{
 #----------------------------------------------------------------------
 # Text functions.
 
+# Join two lists.
+pure function join (xs, ys) returning strings = @{
+    for f in %xs %ys; do echo "$f"; done
+}
+
 # Sort + uniq a list.
 pure function sort (xs) returning strings = @{
     for f in %xs; do echo "$f"; done | sort -u
