@@ -7,6 +7,8 @@
 *.log
 *.o
 
+/local*
+
 /man/*.?
 
 .depend
