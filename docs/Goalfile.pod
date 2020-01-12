@@ -14,6 +14,30 @@ Goalfile - introduction, tutorial, and reference for writing goal files
 
 =head2 Standard Functions
 
+=head3 basename (path)
+
+For example:
+
+ basename ("dir/file.ext") ⇒ "file.ext"
+
+Returns the filename part of the path.
+
+=head3 dirname (path)
+
+For example:
+
+ dirname ("dir/file.ext") ⇒ "dir"
+
+Returns the directory part of the path.
+
+=head3 extension (filename)
+
+For example:
+
+ extension ("dir/file.ext") ⇒ "ext"
+
+Returns the filename extension.
+
 =head3 sort (list)
 
 For example:

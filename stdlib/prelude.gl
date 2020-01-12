@@ -69,6 +69,22 @@ pure function subst (from, to, text) returning string = @{
 #----------------------------------------------------------------------
 # File functions.
 
+# Base name.
+pure function basename (name) returning string = @{
+    basename %name
+}
+
+# Directory name.
+pure function dirname (name) returning string = @{
+    dirname %name
+}
+
+# File extension.
+pure function extension (name) returning string = @{
+    name=%name
+    echo "${name##*.}"
+}
+
 # Expand a wildcard into a list of filenames.
 #
 # This function is probably not "pure" since it depends on the
