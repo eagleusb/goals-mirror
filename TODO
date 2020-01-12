@@ -21,9 +21,6 @@ Let within functions and goals, eg:
     { .... }
 Unclear if this would be helpful or not.
 
-Implement more make functions, see:
-https://www.gnu.org/software/make/manual/html_node/Functions.html#Functions
-
 Split "flags" strings.  eg. Currently there is no way to pass
 $CFLAGS from autoconf into a goalfile.
 
