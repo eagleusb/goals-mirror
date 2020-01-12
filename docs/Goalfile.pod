@@ -56,6 +56,23 @@ Concatenate C<list1> and C<list2>.  It's not usually necessary to use
 this function since goals automatically flattens lists within lists
 into simple lists in many cases.
 
+=head3 read (filename)
+
+For example:
+
+ read ("filename") => "this is the content of filename"
+
+Read the contents of C<filename> and return it as a single string.
+If there is a trailing C<\n> in the file it is truncated.
+
+=head3 readlines (filename)
+
+For example:
+
+ readlines ("filename") => ["line1", "line2", "line3"]
+
+Read the lines in C<filename> returning a list of strings.
+
 =head3 realpath (filename)
 
 For example:

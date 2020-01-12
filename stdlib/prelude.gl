@@ -107,6 +107,16 @@ pure function extension (name) returning string = @{
     echo "${name##*.}"
 }
 
+# Read a file.
+function read (filename) returning string = @{
+    cat %filename
+}
+
+# Read a file as a list of lines.
+function readlines (filename) returning strings = @{
+    cat %filename
+}
+
 # Real path.
 function realpath (filename) returning string = @{
     realpath -- %filename
