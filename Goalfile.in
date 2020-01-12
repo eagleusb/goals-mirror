@@ -29,13 +29,15 @@ goal all = : "Goalfile", tool, documentation;
     ./config.status %@
 }
 
-goal clean = {
-    for d in %subdirs; do
-        pushd $d
-        rm -f *~
-        rm -f *.cmi *.cmo *.cmx *.o
-        popd
-    done
+goal clean = : wrap ("clean-subdir", subdirs), clean-subdir ("."), clean-other
+
+goal clean-subdir (dir) = {
+    cd %dir
+    rm -f *~
+    rm -f *.cmi *.cmo *.cmx *.o
+}
+
+goal clean-other = {
     rm -f src/parser.ml src/parser.mli src/lexer.ml src/parser.conflicts
     rm -f man/*.1 man/*.5
     rm -f tests/*.log
