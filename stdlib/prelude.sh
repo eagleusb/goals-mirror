@@ -27,22 +27,13 @@ function quoted_string ()
     echo -n "\"$1\""
 }
 
-# For printing strings in different colours, use these functions.
-function start_red ()
+# For printing strings in different colours.
+function print_red ()
 {
-    echo -ne "\x1b[1;31m"
+    echo -e "\x1b[1;31m$@\x1b[0m"
 }
 
-function start_green ()
+function print_green ()
 {
-    echo -ne "\x1b[0;32m"
-}
-
-function end_colour ()
-{
-    echo -ne "\x1b[0m"
-}
-function end_color ()
-{
-    echo -ne "\x1b[0m"
+    echo -e "\x1b[0;32m$@\x1b[0m"
 }

@@ -147,15 +147,9 @@ goal test (name) = @{
     t=`basename %name`
     cd tests
     if ../run ./$t > $t.log 2>&1; then
-        start_green
-        echo -n "PASS: "
-        end_colour
-        echo $t
+        print_green "PASS:" $t
     else
-        start_red
-        echo -n "FAIL: "
-        end_colour
-        echo $t
+        print_red "FAIL:" $t
         exit 1
     fi
 }
