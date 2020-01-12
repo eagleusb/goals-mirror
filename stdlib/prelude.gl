@@ -98,12 +98,12 @@ pure function tail (xs) returning strings = @{
 
 # Base name.
 pure function basename (name) returning string = @{
-    basename %name
+    basename -- %name
 }
 
 # Directory name.
 pure function dirname (name) returning string = @{
-    dirname %name
+    dirname -- %name
 }
 
 # File extension.
@@ -114,12 +114,12 @@ pure function extension (name) returning string = @{
 
 # Read a file.
 function read (filename) returning string = @{
-    cat %filename
+    cat -- %filename
 }
 
 # Read a file as a list of lines.
 function readlines (filename) returning strings = @{
-    cat %filename
+    cat -- %filename
 }
 
 # Real path.
