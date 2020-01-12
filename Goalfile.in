@@ -126,8 +126,7 @@ goal depend =
 let POD2MAN = "@POD2MAN@"
 
 goal documentation = : pod2man ("goals", "1"),
-                       pod2man ("Goalfile", "5"),
-                       pod2man ("goals-reference", "5")
+                       pod2man ("Goalfile", "5")
 
 goal pod2man (page, section) =
 "man/%page.%section" : "docs/%page.pod" {

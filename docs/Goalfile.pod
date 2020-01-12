@@ -2,20 +2,19 @@
 
 =head1 NAME
 
-Goalfile - introduction and tutorial to writing goal files
+Goalfile - introduction, tutorial, and reference for writing goal files
 
 =head1 SUMMARY
 
+=head1 INTRODUCTION
 
-=head1 DESCRIPTION
+=head1 TUTORIAL
 
-
-
-
+=head1 REFERENCE
 
 =head1 SEE ALSO
 
-L<goals(1)>, L<goals-reference(5)>.
+L<goals(1)>.
 
 =head1 AUTHORS
 

@@ -26,10 +26,8 @@ problems that make suffers from.
 
 This manual page documents the command line tool and options.
 
-There is an introduction and tutorial on writing goal files:
-L<Goalfile(5)>.
-
-There is also a reference manual: L<goals-reference(5)>.
+There is an introduction to and tutorial on writing goal files, as
+well as a reference manual in L<Goalfile(5)>.
 
 =head1 OPTIONS
 
@@ -70,8 +68,7 @@ if I<-C> was not used.
 Specify an include directory, used when including goal files using the
 C<include> directive.  You can use this option multiple times.  Later
 directories have priority over earlier ones.  There is also an
-implicit C<%stdlib> directory which is used for prelude files (see
-L<goals-reference(5)>).
+implicit C<%stdlib> directory which is used for prelude files.
 
 Note that if a relative path is given here, it is relative to the
 directory specified with the I<-C> option, or to the current directory
@@ -106,7 +103,7 @@ turning all S<C<{ CODE }>> sections into S<C<@{ CODE }>> sections.
 
 =head1 SEE ALSO
 
-L<Goalfile(5)>, L<goals-reference(5)>, L<make(1)>.
+L<Goalfile(5)>, L<make(1)>.
 
 =head1 AUTHORS
 
