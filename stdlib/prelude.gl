@@ -90,6 +90,11 @@ pure function extension (name) returning string = @{
     echo "${name##*.}"
 }
 
+# Real path.
+function realpath (filename) returning string = @{
+    realpath -- %filename
+}
+
 # Expand a wildcard into a list of filenames.
 #
 # This function is probably not "pure" since it depends on the

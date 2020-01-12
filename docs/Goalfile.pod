@@ -48,6 +48,15 @@ Concatenate C<list1> and C<list2>.  It's not usually necessary to use
 this function since goals automatically flattens lists within lists
 into simple lists in many cases.
 
+=head3 realpath (filename)
+
+For example:
+
+ realpath ("./tests") ⇒ "/home/user/tests"
+
+Run the L<realpath(1)> command to return the resolved absolute path of
+the C<filename> parameter.
+
 =head3 sort (list)
 
 For example:
