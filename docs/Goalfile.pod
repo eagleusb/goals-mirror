@@ -38,6 +38,14 @@ For example:
 
 Returns the filename extension.
 
+=head3 head (list)
+
+For example:
+
+ head (["a", "b", "c"]) ⇒ "a"
+
+Returns the head (first) element of the list.
+
 =head3 join (list1, list2)
 
 For example:
@@ -75,6 +83,14 @@ For example:
 This function works something like make’s C<subst> function, except
 that C<from> is a regular expression, specifically a L<sed(1)>
 extended regular expression.
+
+=head3 tail (list)
+
+For example:
+
+ tail (["a", "b", "c"]) ⇒ ["b", "c"]
+
+Returns the tail (all except first) elements of the list.
 
 =head3 wildcard (pattern)
 

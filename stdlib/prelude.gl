@@ -54,6 +54,14 @@ pure function wrap (wrapper, xs) = @{
 #----------------------------------------------------------------------
 # Text functions.
 
+# Head of a list.
+pure function head (xs) returning string = @{
+    for f in %xs; do
+        echo "$f"
+        exit 0
+    done
+}
+
 # Join two lists.
 pure function join (xs, ys) returning strings = @{
     for f in %xs %ys; do echo "$f"; done
@@ -69,6 +77,15 @@ pure function subst (from, to, text) returning string = @{
     # We need to replace any / characters in ‘to’ with escaped ones.
     to="$( echo -n %to | sed 's,/,\\/,g' )"
     echo %text | sed -E s/%from/$to/g
+}
+
+# Tail of a list.
+pure function tail (xs) returning strings = @{
+    drop=1
+    for f in %xs; do
+        if [ -z "$drop" ]; then echo "$f"; fi
+        drop=
+    done
 }
 
 #----------------------------------------------------------------------
