@@ -82,6 +82,22 @@ Concatenate C<list1> and C<list2>.  It's not usually necessary to use
 this function since goals automatically flattens lists within lists
 into simple lists in many cases.
 
+=head3 last (list)
+
+For example:
+
+ last (["a", "b", "c"]) ⇒ "c"
+
+Returns the last element of a list.
+
+=head3 nth (n, list)
+
+For example:
+
+ nth (1, ["a", "b", "c"]) ⇒ "b"
+
+Returns the n’th element of a list (counting from 0).
+
 =head3 read (filename)
 
 For example:

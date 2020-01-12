@@ -82,6 +82,25 @@ pure function join (xs, ys) returning strings = @{
     for f in %xs %ys; do echo "$f"; done
 }
 
+# Last element of a list.
+pure function last (xs) returning string = @{
+    for f in %xs; do
+        r="$f"
+    done
+    echo "$r"
+}
+
+# n'th element of a list.
+pure function nth (n, xs) returning string = @{
+    i=0
+    r=
+    for f in %xs; do
+        if [ $i -eq %n ]; then r="$f"; fi
+        ((++i))
+    done
+    echo "$r"
+}
+
 # Sort + uniq a list.
 pure function sort (xs) returning strings = @{
     for f in %xs; do echo "$f"; done | sort -u
