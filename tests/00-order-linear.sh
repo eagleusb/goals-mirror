@@ -17,7 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-# Test a linear dependency graph is built in the right order.
+set -e
 
 goals -f 00-order-linear.gl > 00-order-linear.out
 test "$(grep '^G' 00-order-linear.out)" = "G5

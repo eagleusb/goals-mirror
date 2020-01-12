@@ -17,6 +17,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+set -e
+
 goals -f 00-override-var.gl > 00-override-var.out
 test "$(cat 00-override-var.out)" = "RIGHT"
 
