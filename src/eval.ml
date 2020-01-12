@@ -278,6 +278,10 @@ and call_function_really env loc name returning code =
      let r, b = run_code_to_string env loc code in
      if r <> 0 then
        failwithf "function ‘%s’ failed with exit code %d" name r;
+     (* Remove a single trailing \n if present. *)
+     let b =
+       let len = String.length b in
+       if len > 0 && b.[len-1] = '\n' then String.sub b 0 (len-1) else b in
      Ast.EConstant (loc, Ast.CString b)
 
   | RetStrings ->
