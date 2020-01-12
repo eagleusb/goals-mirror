@@ -12,6 +12,19 @@ Goalfile - introduction, tutorial, and reference for writing goal files
 
 =head1 REFERENCE
 
+=head2 Standard Functions
+
+=head3 subst (from, to, text)
+
+For example:
+
+ subst ("aa", "AA", "aabbccaa") ⇒ "AAbbccAA"
+ subst ("a.*c", "b", "aaacac") ⇒ "bb"
+
+This function works something like make’s C<subst> function, except
+that C<from> is a regular expression, specifically a L<sed(1)>
+extended regular expression.
+
 =head1 SEE ALSO
 
 L<goals(1)>.

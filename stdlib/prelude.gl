@@ -59,6 +59,13 @@ pure function sort (xs) returning strings = @{
     for f in %xs; do echo "$f"; done | sort -u
 }
 
+# Substitute.
+pure function subst (from, to, text) returning string = @{
+    # We need to replace any / characters in ‘to’ with escaped ones.
+    to="$( echo -n %to | sed 's,/,\\/,g' )"
+    echo %text | sed -E s/%from/$to/g
+}
+
 #----------------------------------------------------------------------
 # File functions.
 
