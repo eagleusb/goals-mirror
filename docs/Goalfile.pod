@@ -14,6 +14,14 @@ Goalfile - introduction, tutorial, and reference for writing goal files
 
 =head2 Standard Functions
 
+=head3 sort (list)
+
+For example:
+
+ sort (["c", "b", "b", "a"]) ⇒ ["a", "b", "c"]
+
+This takes a list of strings and sorts it, removing duplicates.
+
 =head3 subst (from, to, text)
 
 For example:
@@ -24,6 +32,26 @@ For example:
 This function works something like make’s C<subst> function, except
 that C<from> is a regular expression, specifically a L<sed(1)>
 extended regular expression.
+
+=head3 wildcard (pattern)
+
+For example:
+
+ wildcard ("*.c") ⇒ ["bar.c", "foo.c"]
+
+The single parameter is a wildcard which is expanded into a list of
+files using ordinary globbing rules.
+
+=head3 wrap (wrapper, list)
+
+For example:
+
+ wrap ("*file", ["bar.c", "foo.c"]) ⇒ [*file("bar.c"), *file("foo.c")]
+
+Each element in C<list> is wrapped into a call to C<wrapper(element)>.
+There are two common uses for this: either to add explicit tactics
+(such as C<*file>) to a plain list of strings as in the example above;
+or to turn a list of strings into a list of goal or function calls.
 
 =head1 SEE ALSO
 
