@@ -18,9 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # This is expected to return an error, and as long as it does this
-# script is successful.  Don't print the error message because that
-# will confuse everyone.
-if goals -f 00-variable-not-found.gl 2>/dev/null; then
+# script is successful.
+if goals -f 00-variable-not-found.gl; then
     exit 1
 else
     exit 0
