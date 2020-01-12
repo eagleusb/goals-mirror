@@ -108,7 +108,7 @@ pure function sort (xs) returning strings = @{
 
 # Split a string into a list.
 # https://superuser.com/a/1066541
-pure function split (s) returning strings = {
+pure function split (s) returning strings = @{
     s=%s
     eval 'for f in '$s'; do echo "$f"; done'
 }
