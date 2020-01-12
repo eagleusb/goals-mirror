@@ -40,6 +40,11 @@ tactic *exists (filename) = @{
 #----------------------------------------------------------------------
 # Basic functions.
 
+function error (msg) = @{
+    echo %msg >&2
+    exit 1
+}
+
 # Wrap list of strings in a call or tactic.
 pure function wrap (wrapper, xs) = @{
     echo '['

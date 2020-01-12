@@ -30,6 +30,14 @@ For example:
 
 Returns the directory part of the path.
 
+=head3 error (msg)
+
+For example:
+
+ error ("this should not happen")
+
+This prints the error message and causes goals to exit.
+
 =head3 extension (filename)
 
 For example:
