@@ -1,0 +1,53 @@
+# Goals test.
+# Copyright (C) 2020 Richard W.M. Jones
+# Copyright (C) 2020 Red Hat Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# Test dependencies are ordered correctly.  Although the exact
+# order in which these goals will be built is non-deterministic,
+# dependencies with longer names are built before prefixes of
+# those names (eg. g311 -> g31 -> g3).  The associated shell
+# script checks this property of the output.
+
+goal all = : g1, g2, g3
+
+goal g1 = : g11, g12, g13 { echo g1 }
+
+goal g2 = : g21, g22, g23 { echo g2 }
+
+goal g3 = : g31, g32, g33 { echo g3 }
+
+goal g11 = { echo g11 }
+goal g12 = { echo g12 }
+goal g13 = { echo g13 }
+
+goal g21 = { echo g21 }
+goal g22 = { echo g22 }
+goal g23 = { echo g23 }
+
+goal g31 = : g311, g312, g313 { echo g31 }
+goal g32 = { echo g32 }
+goal g33 = { echo g33 }
+
+goal g311 = : g3111, g3112, g3113 { echo g311 }
+goal g312 = { echo g312 }
+goal g313 = { echo g313 }
+
+goal g3111 = : g31111 { echo g3111 }
+goal g3112 = { echo g3112 }
+goal g3113 = { echo g3113 }
+
+goal g31111 = { echo g31111 }
