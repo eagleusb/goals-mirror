@@ -40,3 +40,10 @@ Infinite loop when you have this goal:
 goal pod2man (page, section) = "docs/%page.%section" : "docs/%page.pod" { ... }
 This is caused by %section matching "pod" so the rule is called
 again, even if the local file docs/%page.pod actually exists.
+
+Implement make-like “eval” function (similar to include directive,
+but it evaluates the output of a function as Goalfile syntax).
+
+Implement make-like “origin” function.  This is easy but it requires
+us to track to the origin of definitions which we do not do at
+the moment.
