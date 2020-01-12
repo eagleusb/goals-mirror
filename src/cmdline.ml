@@ -51,7 +51,7 @@ let directory = ref "."
 let input_file = ref "Goalfile"
 let includes = ref [stdlibdir]
 let add_include dir = includes := dir :: !includes
-let nr_jobs = ref 4 (* XXX use nproc *)
+let nr_jobs = ref (nprocs ())
 let use_prelude = ref true
 
 let parse () =
@@ -59,6 +59,8 @@ let parse () =
     failwithf "%s: cannot find the standard library directory, expected %s.  If the standard library directory is in a non-standard location then set GOALS_DATADIR.  If you can trying to run goals from the build directory then use ‘./run goals ...’"
       Sys.executable_name stdlibdir;
 
+  let jobshelp =
+    sprintf "jobs Set number of parallel jobs (default: %d)" !nr_jobs in
   let argspec = [
     "-C",          Arg.Set_string directory,
                    "directory Change to directory before running";
@@ -75,9 +77,9 @@ let parse () =
     "--include",   Arg.String add_include,
                    "dir Add include directory";
     "-j",          Arg.Set_int nr_jobs,
-                   "jobs Set number of parallel jobs";
+                   jobshelp;
     "--jobs",      Arg.Set_int nr_jobs,
-                   "jobs Set number of parallel jobs";
+                   jobshelp;
     "--no-prelude",Arg.Clear use_prelude,
                    " Do not automatically use prelude.gl from stdlib";
     "-v",          Arg.Unit print_version,

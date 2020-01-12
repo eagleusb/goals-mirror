@@ -19,6 +19,8 @@
 
 open Printf
 
+external nprocs : unit -> int = "nprocs"
+
 let failwithf fs = ksprintf failwith fs
 
 let (//) = Filename.concat

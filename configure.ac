@@ -29,6 +29,10 @@ AC_PROG_CPP
 AC_C_PROTOTYPES
 test "x$U" != "x" && AC_MSG_ERROR([Compiler not ANSI compliant])
 
+dnl C headers and functions.
+AC_CHECK_HEADERS([sys/sysinfo.h])
+AC_CHECK_FUNCS([get_nprocs])
+
 dnl Check for basic OCaml environment and findlib.
 AC_PROG_OCAML
 if test "x$OCAMLC" = "xno"; then

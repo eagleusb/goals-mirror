@@ -38,7 +38,8 @@ src/goals:
 	echo 'val lexer_read : (Lexing.lexbuf -> token) option ref' >> src/parser.mli
 	echo 'val eval_substitute : (Ast.env -> Ast.loc -> Ast.substs -> string) option ref' >> src/parser.mli
 	$(OCAMLLEX) src/lexer.mll
-	$(OCAMLFIND) opt $(OCAMLFLAGS) $(OCAMLPACKAGES) -I src \
+	$(OCAMLFIND) opt $(OCAMLFLAGS) $(OCAMLPACKAGES) -I . -I src \
+	    src/utils-c.c \
 	    $$($(OCAMLDEP) -sort src/*.mli src/*.ml) \
 	    -linkpkg -o $@
 

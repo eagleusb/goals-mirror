@@ -17,6 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *)
 
+val nprocs : unit -> int
+(** Return the number of processors on the system. *)
+
 val failwithf : ('a, unit, string, 'b) format4 -> 'a
 (** Like [failwith] but supports printf-like arguments. *)
 
