@@ -106,6 +106,13 @@ pure function sort (xs) returning strings = @{
     for f in %xs; do echo "$f"; done | sort -u
 }
 
+# Split a string into a list.
+# https://superuser.com/a/1066541
+pure function split (s) returning strings = {
+    s=%s
+    eval 'for f in '$s'; do echo "$f"; done'
+}
+
 # Substitute.
 pure function subst (from, to, text) returning string = @{
     # We need to replace any / characters in ‘to’ with escaped ones.

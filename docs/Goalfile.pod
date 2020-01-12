@@ -132,6 +132,20 @@ For example:
 
 This takes a list of strings and sorts it, removing duplicates.
 
+=head3 split (string)
+
+For example:
+
+ split ("-g -O2") ⇒ ["-g", "-O2"]
+
+Split a string using shell rules into a list of strings.  This is
+commonly used for splitting C<CFLAGS> provided by autoconf into a list
+for use by goals:
+
+ let CFLAGS = split ("@CFLAGS@")
+ goal compile (name) =
+ "%name.o" : "%name.c" { %CC %CFLAGS -c %< -o %@ }
+
 =head3 subst (from, to, text)
 
 For example:

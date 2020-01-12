@@ -1,0 +1,5 @@
+-g
+-O2
+-I.
+-Dvar=hello world
+-Dvar2="good bye!"

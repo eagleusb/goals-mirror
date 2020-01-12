@@ -59,13 +59,9 @@ let MENHIR = "@MENHIR@"
 let OCAMLDEP = "@OCAMLDEP@"
 let OCAMLFIND = "@OCAMLFIND@"
 let OCAMLLEX = "@OCAMLLEX@"
-# XXX
-let CFLAGS = [ "-g", "-O2", "-I%OCAMLLIB", "-I." ]
-#let CFLAGS = "@CFLAGS@ -I%OCAMLLIB -I."
-let OCAMLFLAGS = [ "-g", "-safe-string", "-warn-error", "CDEFLMPSUVYZX+52-3" ]
-let OCAMLPACKAGES = [ "-package", "str,unix,threads", "-I", "src", "-thread" ]
-#let OCAMLFLAGS = "@OCAMLFLAGS@"
-#let OCAMLPACKAGES = "@OCAMLPACKAGES@"
+let CFLAGS = join (split ("@CFLAGS@"), ["-I%OCAMLLIB", "-I."])
+let OCAMLFLAGS = split ("@OCAMLFLAGS@")
+let OCAMLPACKAGES = join (split ("@OCAMLPACKAGES@"), ["-I", "src"])
 
 let objects = [
     # These must be in dependency order.
