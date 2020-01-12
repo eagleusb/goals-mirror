@@ -172,3 +172,78 @@ goal install = {
     install src/goals %DESTDIR/"$bindir" -m 0755
     install %stdlibfiles %DESTDIR/"$datadir"/goals -m 644
 }
+
+#----------------------------------------------------------------------
+# Distribution.
+
+let sources = [
+    "src/ast.ml",
+    "src/ast.mli",
+    "src/cmdline.ml",
+    "src/cmdline.mli",
+    "src/config.ml.in",
+    "src/config.mli",
+    "src/deps.ml",
+    "src/deps.mli",
+    "src/eval.ml",
+    "src/eval.mli",
+    "src/jobs.ml",
+    "src/jobs.mli",
+    "src/lexer.mli",
+    "src/lexer.mll",
+    "src/main.ml",
+    "src/parse.ml",
+    "src/parse.mli",
+    "src/parser.mly",
+    "src/run.ml",
+    "src/run.mli",
+    "src/utils-c.c",
+    "src/utils.ml",
+    "src/utils.mli",
+]
+
+let distfiles = [
+    ".gitignore",
+    "COPYING",
+    "Goalfile.in",
+    "Makefile.in",
+    "README",
+    "TODO",
+    "autogen.sh",
+    "config.h.in",
+    "configure",
+    "configure.ac",
+    wildcard ("docs/*.pod"),
+    "install-sh",
+    "m4/ocaml.m4",
+    "run.in",
+    sources,
+    "stamp-h.in",
+    wildcard ("stdlib/*.gl"),
+    wildcard ("stdlib/*.sh"),
+    wildcard ("tests/*.data"),
+    wildcard ("tests/*.data[0-9]"),
+    wildcard ("tests/*.expected"),
+    wildcard ("tests/*.gl"),
+    wildcard ("tests/*.sh"),
+    wildcard ("tests/10-function-wildcard.d/*"),
+]
+
+let tarfile = "@PACKAGE_NAME@-@PACKAGE_VERSION@.tar.gz"
+
+goal dist = {
+    d="@PACKAGE_NAME@-@PACKAGE_VERSION@"
+    o=%tarfile
+    rm -rf "$d"
+    rm -f "$o" "$o-t"
+
+    mkdir "$d"
+    for f in %distfiles; do
+        subdir="$(dirname "$f")"
+        mkdir -p "$d/$subdir"
+        cp -a "$f" "$d/$subdir"
+    done
+    tar zcf "$o-t" "$d"
+    mv "$o-t" "$o"
+    rm -rf "$d"
+}
