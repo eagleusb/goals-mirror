@@ -217,6 +217,7 @@ let distfiles = [
     "install-sh",
     "m4/ocaml.m4",
     "run.in",
+    "src/.depend",
     sources,
     "stamp-h.in",
     wildcard ("stdlib/*.gl"),
