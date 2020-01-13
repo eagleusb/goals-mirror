@@ -120,9 +120,10 @@ goal depend =
 # Documentation.
 
 let POD2MAN = "@POD2MAN@"
+let POD2TEXT = "@POD2TEXT@"
 
-goal documentation = : pod2man ("goals", "1"),
-                       pod2man ("Goalfile", "5")
+goal documentation = : pod2man ("goals", "1"), pod2man ("Goalfile", "5"),
+                       pod2text ("goals", "1"), pod2text ("Goalfile", "5")
 
 goal pod2man (page, section) =
 "man/%page.%section" : "docs/%page.pod" {
@@ -133,6 +134,14 @@ goal pod2man (page, section) =
         -c "goals" \
         --release "@PACKAGE_NAME@-@PACKAGE_VERSION@" \
         --section %section %< > %@-t
+    mv %@-t %@
+}
+
+goal pod2text (page, section) =
+"man/%page.%section.txt" : "docs/%page.pod" {
+    rm -f %@ %@-t
+    mkdir -p man
+    %POD2TEXT -u %< > %@-t
     mv %@-t %@
 }
 

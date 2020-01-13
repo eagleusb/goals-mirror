@@ -96,7 +96,7 @@ Requirements:
 
  - menhir (an OCaml-based parser generator)
 
- - pod2man (part of Perl, for generating documentation)
+ - pod2man and pod2text (part of Perl, for generating documentation)
 
  - autoconf and automake
 

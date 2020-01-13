@@ -57,6 +57,10 @@ AC_CHECK_PROG([POD2MAN], [pod2man], [pod2man], [
     AC_MSG_ERROR([pod2man tool from Perl is required])
 ])
 
+AC_CHECK_PROG([POD2TEXT], [pod2text], [pod2text], [
+    AC_MSG_ERROR([pod2text tool from Perl is required])
+])
+
 dnl Substitute OCaml flags and packages.
 AC_SUBST([OCAMLFLAGS], ["-g -safe-string -warn-error CDEFLMPSUVYZX+52-3"])
 AC_SUBST([OCAMLPACKAGES], ["-package str,unix,threads -thread"])
