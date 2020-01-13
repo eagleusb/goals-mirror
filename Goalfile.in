@@ -257,3 +257,52 @@ goal dist = {
     mv "$o-t" "$o"
     rm -rf "$d"
 }
+
+goal distcheck = : dist {
+    d="@PACKAGE_NAME@-@PACKAGE_VERSION@"
+    tar zxf %tarfile
+    pushd "$d"
+    ./configure
+    make
+    make check
+    popd
+    rm -rf "$d"
+    print_green "PASS: distcheck"
+}
+
+#----------------------------------------------------------------------
+# Maintainer rules.
+
+# Check no files are missing from distfiles above by unpacking the
+# distribution tarball and comparing it to git.
+goal maintainer-check-extra-dist = : dist @{
+    tar ztf %tarfile | sort |
+        sed 's,^@PACKAGE_NAME@-@PACKAGE_VERSION@/,,' > tarfiles
+    git ls-files | sort > gitfiles
+    comm -13 tarfiles gitfiles > comm.out
+    cat comm.out
+    [ ! -s comm.out ]
+    rm tarfiles gitfiles comm.out
+    print_green "PASS: distfiles"
+}
+
+# XXX This should also do a Fedora build.
+goal maintainer-release = : dist,
+                            maintainer-check-extra-dist,
+                            distcheck,
+                            maintainer-upload
+
+let websitedir = "%HOME/d/websites/people.redhat.com/goals"
+
+# XXX Should actually use the *url tactic here.
+goal maintainer-upload = {
+    [ -d %websitedir ]
+    cp %tarfile %websitedir/files
+    cp README %websitedir/README
+    cp man/goals.1.txt man/Goalfile.5.txt %websitedir
+    cd %websitedir
+    git add files/%tarfile README goals.1.txt Goalfile.5.txt
+    git commit -m "@PACKAGE_NAME@ @PACKAGE_VERSION@"
+    cd ..
+    ./.rsync
+}
