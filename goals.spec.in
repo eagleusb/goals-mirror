@@ -1,0 +1,56 @@
+Name:           @PACKAGE_NAME@
+Version:        @PACKAGE_VERSION@
+Release:        1%{?dist}
+Summary:        An experimental tool that generalizes "make"
+
+License:        GPLv2+
+URL:            https://people.redhat.com/~rjones/goals/
+
+Source0:        https://people.redhat.com/~rjones/goals/files/%{name}-%{version}.tar.gz
+
+BuildRequires:  ocaml
+BuildRequires:  ocaml-findlib
+BuildRequires:  ocaml-menhir
+BuildRequires:  perl-podlators
+
+
+%description
+Make is a clever tool for expressing dependencies between files and it
+is widely used for building software.  But it has some limitations.
+It only knows about files.  It has limited ways to write rules.  And
+for a tool whose main job is running shell commands, there are several
+gotchas when you actually write shell commands.
+
+Goals is an experimental tool which aims to generalize make beyond
+these limitations.
+
+
+%prep
+%autosetup -p1
+
+
+%build
+%configure
+make %{?_smp_mflags}
+
+
+%install
+%make_install
+
+
+%check
+make %{?_smp_mflags} check
+
+
+%files
+%doc README TODO
+%license COPYING
+%{_bindir}/goals
+%dir %{_datadir}/goals
+%{_datadir}/goals/*.gl
+%{_datadir}/goals/*.sh
+
+
+%changelog
+* Sat Jan 18 2020 Richard W.M. Jones <rjones@redhat.com> - %{version}-1
+- Version %{version}.

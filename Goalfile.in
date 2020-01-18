@@ -176,10 +176,10 @@ goal install = {
     # exec_prefix die die die
     bindir="@prefix@/bin"
     datadir="@prefix@/share"
-    mkdir -p %DESTDIR/"$bindir"
-    mkdir -p %DESTDIR/"$datadir/goals"
-    install src/goals %DESTDIR/"$bindir" -m 0755
-    install %stdlibfiles %DESTDIR/"$datadir"/goals -m 644
+    mkdir -p %DESTDIR"$bindir"
+    mkdir -p %DESTDIR"$datadir/goals"
+    install src/goals %DESTDIR"$bindir" -m 0755
+    install %stdlibfiles %DESTDIR"$datadir"/goals -m 644
 }
 
 #----------------------------------------------------------------------
@@ -223,6 +223,7 @@ let distfiles = [
     "configure",
     "configure.ac",
     wildcard ("docs/*.pod"),
+    "goals.spec.in",
     "install-sh",
     "m4/ocaml.m4",
     "run.in",
@@ -290,12 +291,14 @@ goal maintainer-check-extra-dist = : dist @{
 goal maintainer-release = : dist,
                             maintainer-check-extra-dist,
                             distcheck,
-                            maintainer-upload
+                            maintainer-upload,
+                            maintainer-srpm,
+                            maintainer-fedora-copr
 
 let websitedir = "%HOME/d/websites/people.redhat.com/goals"
 
 # XXX Should actually use the *url tactic here.
-goal maintainer-upload = {
+goal maintainer-upload = : distcheck {
     [ -d %websitedir ]
     cp %tarfile %websitedir/files
     cp README %websitedir/README
@@ -305,4 +308,22 @@ goal maintainer-upload = {
     git commit -m "@PACKAGE_NAME@ @PACKAGE_VERSION@"
     cd ..
     ./.rsync
+}
+
+pure function get-fedora-dist () returning string = @{
+    rpm --eval '%%dist'
+}
+let fedora-dist = get-fedora-dist ()
+let srpm = "goals-@PACKAGE_VERSION@%fedora-dist.src.rpm"
+
+goal maintainer-srpm =
+"%srpm" : tarfile, "goals.spec" {
+    rpmbuild -bs \
+        --define "%%_sourcedir $PWD" \
+        --define "%%_srcrpmdir $PWD" \
+        goals.spec
+}
+
+goal maintainer-fedora-copr = : maintainer-upload, srpm {
+    copr build rjones/goals %srpm
 }

@@ -70,6 +70,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([run], [chmod +x,-w run])
 AC_CONFIG_FILES([Goalfile Makefile
+                 goals.spec
                  src/config.ml])
 
 AC_OUTPUT

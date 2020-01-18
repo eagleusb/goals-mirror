@@ -24,6 +24,8 @@ Makefile
 /config.h.in
 /config.log
 /config.status
+/goals.spec
+/goals-*.src.rpm
 /install-sh
 /run
 /src/config.ml
