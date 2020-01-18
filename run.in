@@ -38,6 +38,10 @@ prepend PATH "$b/src"
 # Set up environment variables to add default flags.
 export GOALS_DATADIR="$b"
 
+# Set OCAMLRUNPARAM so stack traces are displayed, but don't
+# override the user's value.
+if [ -z "$OCAMLRUNPARAM" ]; then export OCAMLRUNPARAM=b; fi
+
 # Run the program.
 #echo "$@"
 exec "$@"
