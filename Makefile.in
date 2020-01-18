@@ -19,6 +19,7 @@
 # Pass through normal targets to Goalfile.in
 
 all clean depend install check maintainer-clean dist distcheck \
+maintainer-commit maintainer-tag \
 maintainer-check-extra-dist maintainer-release \
 maintainer-srpm maintainer-fedora-copr: src/goals
 	@./run src/goals $@ 'DESTDIR="$(DESTDIR)"'

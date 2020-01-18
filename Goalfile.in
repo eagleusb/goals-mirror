@@ -277,6 +277,15 @@ goal distcheck = : dist {
 #----------------------------------------------------------------------
 # Maintainer rules.
 
+# Easy way to commit and tag a release.
+goal maintainer-commit = {
+    git commit -a -m "Version "%version"."
+}
+
+goal maintainer-tag = {
+    git tag -a v%version -m "Version "%version -f
+}
+
 # Check no files are missing from distfiles above by unpacking the
 # distribution tarball and comparing it to git.
 goal maintainer-check-extra-dist = : dist @{
