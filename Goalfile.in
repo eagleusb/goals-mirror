@@ -241,7 +241,7 @@ let distfiles = [
 
 let tarfile = "@PACKAGE_NAME@-@PACKAGE_VERSION@.tar.gz"
 
-goal dist = {
+goal dist = "%tarfile" : {
     d="@PACKAGE_NAME@-@PACKAGE_VERSION@"
     o=%tarfile
     rm -rf "$d"
