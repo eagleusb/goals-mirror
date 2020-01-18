@@ -51,7 +51,7 @@
 # Check if the source package has been built in Koji.
 
 tactic *koji-built (pkg) = {
-    cd %fedora-dir/%pkg/%branch
+    cd %fedora-dir/%pkg/%fedora-branch
     koji=%koji
     specfile=%pkg.spec
 
