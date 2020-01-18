@@ -8,10 +8,6 @@
 *.o
 
 /*.tar.gz
-/local*
-
-/man/*.?
-/man/*.?.txt
 
 .depend
 Goalfile
@@ -27,6 +23,9 @@ Makefile
 /goals.spec
 /goals-*.src.rpm
 /install-sh
+/local*
+/man/*.?
+/man/*.?.txt
 /run
 /src/config.ml
 /src/goals
