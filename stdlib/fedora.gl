@@ -1,0 +1,154 @@
+# Goals stdlib Fedora module.
+# Copyright (C) 2020 Richard W.M. Jones
+# Copyright (C) 2020 Red Hat Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# Goals for dealing with Fedora builds.
+
+# For these to work you must set up your environment in
+# a particular way as described below:
+#
+# %fedora-dir:
+# Points to a directory containing Fedora packages checked out
+# of dist git.  You must use the fedpkg clone -B command to
+# create separate branches.
+#
+# %fedora-branch:   Working branch, eg. "master".
+# %fedora-tag:      Build tag, eg. "f32-build".
+#
+# %fedora-rebuild-name:
+# Magic string that identifies this rebuild.  This is used to
+# detect if a rebuild has been attempted before in this run.
+# eg. "Perl 5.99 rebuild"
+#
+# %fedora-source-packages:
+# List of source packages that will be rebuilt.
+#
+# %fedora-ignored:
+# List of source packages which will be ignored.  These are treated
+# as if they have been rebuilt.
+#
+# %fedora-blocked:
+# List of packages which are blocked.  Any dependent packages are
+# also blocked. XXX NOT IMPLEMENTED
+#
+# %koji:            Name of koji binary, usually "koji".
+# %fedpkg:          Name of fedpkg binary, usually "fedpkg".
+
+# Check if the source package has been built in Koji.
+
+tactic *koji-built (pkg) = {
+    cd %fedora-dir/%pkg/%branch
+    koji=%koji
+    specfile=%pkg.spec
+
+    # Packages which are ignored are treated as if they were rebuilt already.
+    for p in %fedora-ignored; do
+        if [ %pkg = "$p" ]; then exit 0; fi
+    done
+
+    # If the specfile doesn't have the magic string then the
+    # package definitely needs to be rebuilt.
+    grep -sq %fedora-rebuild-name $specfile || exit 99
+
+    # Else we must check Koji itself.
+    # Koji sends some messages to stderr.
+    nvr=$(fedpkg verrel)
+    buildinfo=$($koji buildinfo $nvr 2>&1 ||:)
+
+    # No build at all, needs rebuild.
+    echo "$buildinfo" | grep -sq "No such build" && exit 99
+
+    # Existing build, find out what state it is in.
+    state=$(echo "$buildinfo" | grep ^State: | awk '{print $2}')
+    taskid=$(echo "$buildinfo" | grep ^Task: | awk '{print $2}')
+
+    case "$state" in
+    COMPLETE)
+        # Complete so we don't need to rebuild.
+        exit 0 ;;
+    FAILED)
+        # Failed builds must be examined and fixed manually.
+        exit 1 ;;
+    BUILDING)
+        # Cancel the build, we will resubmit it.
+        $koji cancel $taskid ||:
+        exit 99 ;;
+    CANCELED|DELETED)
+        # Do a rebuild.
+        exit 99 ;;
+    esac
+    # Don't know what happened there, so fail.
+    exit 1
+}
+
+# Rebuild a Fedora package.  This rebuilds any dependencies first.
+
+goal fedora-rebuild (pkg) =
+*koji-built ("%pkg") : wrap ("*koji-built", fedora-source-dependencies (pkg)) {
+    cd %fedora-dir/%pkg/%fedora-branch
+    fedpkg=%fedpkg
+    koji=%koji
+    specfile=%pkg.spec
+
+    # We have to wait for the dependencies to become available
+    # before we can start the new build.
+    for p in %<; do
+        nvr=$($koji --quiet latest-build %fedora-tag $p | awk '{print $1}')
+        $koji wait-repo %fedora-tag --build=$nvr
+    done
+
+    # Make sure the local directory is up to date.
+    # This should also fail if there are local changes, which
+    # would need to be corrected/integrated by hand.
+    git pull
+
+    # If the specfile doesn't have the magic string then add
+    # that now.
+    if ! grep -sq %fedora-rebuild-name $specfile; then
+        rpmdev-bumpspec -c "- "%fedora-rebuild-name *.spec
+    else
+        rpmdev-bumpspec -c "- Bump release and rebuild." *.spec
+    fi
+    $fedpkg commit -c
+    $fedpkg push
+    $fedpkg build --target %fedora-tag
+}
+
+# Get the source package names for a particular package.
+# Note this is not merely the BuildRequires, since those are
+# the binary packages.  Also this will only find packages
+# which are in the list of fedora-source-packages.
+pure function fedora-source-dependencies (pkg) returning strings = @{
+    specfile=%fedora-dir/%pkg/%fedora-branch/%pkg.spec
+
+    echo Calculating dependencies of %pkg >&2
+
+    for r in $(rpmspec -q --buildrequires $specfile 2>/dev/null |
+               awk '{print $1}'); do
+        # Now we examine each *other* source package to see
+        # if any will create this dependency when they build.
+        for p in %fedora-source-packages; do
+            if [ "$p" != %pkg ] && \
+                 rpmspec -q --provides %fedora-dir/$p/%fedora-branch/$p.spec 2>/dev/null |
+                 awk '{print $1}' |
+                 grep -sq "^$r\$"
+             then
+                 echo "$p"
+            fi
+        done
+    done
+}
