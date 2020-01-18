@@ -46,9 +46,12 @@ make %{?_smp_mflags} check
 %doc README TODO
 %license COPYING
 %{_bindir}/goals
+%{_mandir}/man1/*.1*
+%{_mandir}/man5/*.5*
 %dir %{_datadir}/goals
-%{_datadir}/goals/*.gl
-%{_datadir}/goals/*.sh
+%dir %{_datadir}/goals/stdlib
+%{_datadir}/goals/stdlib/*.gl
+%{_datadir}/goals/stdlib/*.sh
 
 
 %changelog

@@ -179,10 +179,14 @@ goal install = {
     # exec_prefix die die die
     bindir="@prefix@/bin"
     datadir="@prefix@/share"
+    mandir="$datadir/man"
     mkdir -p %DESTDIR"$bindir"
-    mkdir -p %DESTDIR"$datadir/goals"
+    mkdir -p %DESTDIR"$datadir/goals/stdlib"
+    mkdir -p %DESTDIR"$mandir/man1" %DESTDIR"$mandir/man5"
     install src/goals %DESTDIR"$bindir" -m 0755
-    install %stdlibfiles %DESTDIR"$datadir"/goals -m 644
+    install %stdlibfiles %DESTDIR"$datadir"/goals/stdlib -m 644
+    install man/*.1 %DESTDIR"$mandir"/man1/ -m 644
+    install man/*.5 %DESTDIR"$mandir"/man5/ -m 644
 }
 
 #----------------------------------------------------------------------
