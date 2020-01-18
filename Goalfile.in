@@ -1,6 +1,7 @@
 # Goalfile
-# Copyright (C) 2019 Richard W.M. Jones
-# Copyright (C) 2019 Red Hat Inc.
+# @configure_input@
+# Copyright (C) 2019-2020 Richard W.M. Jones
+# Copyright (C) 2019-2020 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 include "ocaml.gl"
+
+let version = "@PACKAGE_VERSION@"
 
 let subdirs = [ "m4", "src", "stdlib", "docs", "man", "tests" ]
 
@@ -132,7 +135,7 @@ goal pod2man (page, section) =
     %POD2MAN \
         -u \
         -c "goals" \
-        --release "@PACKAGE_NAME@-@PACKAGE_VERSION@" \
+        --release goals-%version \
         --section %section %< > %@-t
     mv %@-t %@
 }
@@ -240,10 +243,10 @@ let distfiles = [
     wildcard ("tests/10-function-wildcard.d/*"),
 ]
 
-let tarfile = "@PACKAGE_NAME@-@PACKAGE_VERSION@.tar.gz"
+let tarfile = "goals-%version.tar.gz"
 
 goal dist = "%tarfile" : {
-    d="@PACKAGE_NAME@-@PACKAGE_VERSION@"
+    d=goals-%version
     o=%tarfile
     rm -rf "$d"
     rm -f "$o" "$o-t"
@@ -260,7 +263,7 @@ goal dist = "%tarfile" : {
 }
 
 goal distcheck = : dist {
-    d="@PACKAGE_NAME@-@PACKAGE_VERSION@"
+    d=goals-%version
     tar zxf %tarfile
     pushd "$d"
     ./configure
@@ -278,7 +281,7 @@ goal distcheck = : dist {
 # distribution tarball and comparing it to git.
 goal maintainer-check-extra-dist = : dist @{
     tar ztf %tarfile | sort |
-        sed 's,^@PACKAGE_NAME@-@PACKAGE_VERSION@/,,' > tarfiles
+        sed 's,^goals-'%version'/,,' > tarfiles
     git ls-files | sort > gitfiles
     comm -13 tarfiles gitfiles > comm.out
     cat comm.out
@@ -305,7 +308,7 @@ goal maintainer-upload = : distcheck {
     cp man/goals.1.txt man/Goalfile.5.txt %websitedir
     cd %websitedir
     git add files/%tarfile README goals.1.txt Goalfile.5.txt
-    git commit -m "@PACKAGE_NAME@ @PACKAGE_VERSION@"
+    git commit -m "goals "%version
     cd ..
     ./.rsync
 }
@@ -314,7 +317,8 @@ pure function get-fedora-dist () returning string = @{
     rpm --eval '%%dist'
 }
 let fedora-dist = get-fedora-dist ()
-let srpm = "goals-@PACKAGE_VERSION@%fedora-dist.src.rpm"
+# XXX Replace autoconf macro with %{version} in future.
+let srpm = "goals-@PACKAGE_VERSION@-1%fedora-dist.src.rpm"
 
 goal maintainer-srpm =
 "%srpm" : tarfile, "goals.spec" {
