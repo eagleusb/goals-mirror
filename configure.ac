@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-AC_INIT([goals], [0.1])
+AC_INIT([goals], [0.2])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_INSTALL
