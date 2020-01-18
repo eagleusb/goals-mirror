@@ -257,6 +257,11 @@ goal dist = "%tarfile" : {
         mkdir -p "$d/$subdir"
         cp -a "$f" "$d/$subdir"
     done
+    # Replace $d/install-sh with a real file
+    if [ -L "$d/install-sh" ]; then
+        rm "$d/install-sh"
+        cp -L "install-sh" "$d/install-sh"
+    fi
     tar zcf "$o-t" "$d"
     mv "$o-t" "$o"
     rm -rf "$d"
