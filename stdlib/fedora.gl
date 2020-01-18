@@ -133,22 +133,32 @@ goal fedora-rebuild (pkg) =
 # the binary packages.  Also this will only find packages
 # which are in the list of fedora-source-packages.
 pure function fedora-source-dependencies (pkg) returning strings = @{
+    echo Calculating dependencies of %pkg >&2
+
     specfile=%fedora-dir/%pkg/%fedora-branch/%pkg.spec
 
-    echo Calculating dependencies of %pkg >&2
+    # We will require the mapping of all source packages to the
+    # list of binary packages they build, so work this out in advance.
+    declare -A binpkgs
+    for p in %fedora-source-packages; do
+        binpkgs[$p]="$(
+            rpmspec -q --provides %fedora-dir/$p/%fedora-branch/$p.spec 2>/dev/null |
+            awk '{print $1}'
+        )"
+    done
 
     for r in $(rpmspec -q --buildrequires $specfile 2>/dev/null |
                awk '{print $1}'); do
         # Now we examine each *other* source package to see
         # if any will create this dependency when they build.
         for p in %fedora-source-packages; do
-            if [ "$p" != %pkg ] && \
-                 rpmspec -q --provides %fedora-dir/$p/%fedora-branch/$p.spec 2>/dev/null |
-                 awk '{print $1}' |
-                 grep -sq "^$r\$"
-             then
-                 echo "$p"
+            if [ "$p" != %pkg ]; then
+                for f in ${binpkgs[$p]}; do
+                    if [ "$f" = "$r" ]; then
+                        echo "$p"
+                    fi
+                done
             fi
         done
-    done
+    done | sort -u
 }
