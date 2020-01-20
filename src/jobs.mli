@@ -21,14 +21,12 @@
 
 type 'a next = Job of 'a * (unit -> unit) | Complete | Not_ready
 
-type 'a retire = 'a -> unit
+val run : (unit -> 'a next) -> ('a -> unit) -> ('a -> string) -> unit
+(** [run next_job retire_job to_string] runs jobs in parallel.
 
-type 'a to_string = 'a -> string
-
-val run : (unit -> 'a next) -> 'a retire -> 'a to_string -> unit
-(** [run next_job retire_job] runs jobs in parallel.  [next_job]
-    is called to pick the next available job.  [retire_job] is
-    called when a job finishes successfully.
+    [next_job] is called to pick the next available job.
+    [retire_job] is called when a job finishes successfully.
+    [to_string] is called if we need to print the job name.
 
     If [next_job] returns [Job f] then that function is started
     (usually in a thread if -j N > 1).

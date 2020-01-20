@@ -21,10 +21,6 @@ open Utils
 
 type 'a next = Job of 'a * (unit -> unit) | Complete | Not_ready
 
-type 'a retire = 'a -> unit
-
-type 'a to_string = 'a -> string
-
 let run next_job retire_job string_of_job =
   (* Number of running threads <= Cmdline.nr_jobs. *)
   let running = ref 0 in
