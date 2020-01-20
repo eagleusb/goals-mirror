@@ -33,6 +33,19 @@ let main () =
   (* Change directory (-C option). *)
   Sys.chdir (Cmdline.directory ());
 
+  (* Create a temporary directory which is always cleaned up at exit. *)
+  let tmpdir =
+    let temp_dir = try Unix.getenv "TMPDIR" with Not_found -> "/var/tmp" in
+    let t = Filename.temp_file ~temp_dir "goals" ".d" in
+    Unix.unlink t;
+    Unix.mkdir t 0o700;
+    at_exit (
+      fun () ->
+        let cmd = sprintf "rm -rf %s" (Filename.quote t) in
+        ignore (Sys.command cmd)
+    );
+    t in
+
   (* Create the initial environment, containing the system environment
    * and a few other standard strings.
    *)
@@ -42,6 +55,8 @@ let main () =
         let k, v = split "=" environ in
         Ast.Env.add k (Ast.EConstant (Ast.noloc, Ast.CString v)) env
     ) Ast.Env.empty (Unix.environment ()) in
+  let env =
+    Ast.Env.add "tmpdir" (Ast.EConstant (Ast.noloc, Ast.CString tmpdir)) env in
   let env =
     Ast.Env.add "stdlib"
       (Ast.EConstant (Ast.noloc, Ast.CString Cmdline.stdlibdir))

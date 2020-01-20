@@ -12,6 +12,15 @@ Goalfile - introduction, tutorial, and reference for writing goal files
 
 =head1 REFERENCE
 
+=head2 Standard Variables
+
+=head3 %tmpdir
+
+The location of a temporary directory which is created by goals when
+it starts and is deleted when it exits (either on success or failure).
+You can use this to store any temporary files that you want
+automatically cleaned up.
+
 =head2 Standard Functions
 
 =head3 basename (path)
