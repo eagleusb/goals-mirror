@@ -53,6 +53,7 @@ let input_file = ref "Goalfile"
 let includes = ref [stdlibdir]
 let add_include dir = includes := dir :: !includes
 let nr_jobs = ref (nprocs ())
+let keep_going = ref false
 let silent = ref false
 let use_prelude = ref true
 
@@ -84,6 +85,10 @@ let parse () =
                    jobshelp;
     "--no-prelude",Arg.Clear use_prelude,
                    " Do not automatically use prelude.gl from stdlib";
+    "-k",          Arg.Set keep_going,
+                   " Keep going after an error";
+    "--keep-going",Arg.Set keep_going,
+                   " Keep going after an error";
     "-s",          Arg.Set silent,
                    " Silent operation";
     "--silent",    Arg.Set silent,
@@ -136,5 +141,6 @@ let input_file () = !input_file
 let includes () = !includes
 
 let nr_jobs () = !nr_jobs
+let keep_going () = !keep_going
 let silent () = !silent
 let use_prelude () = !use_prelude

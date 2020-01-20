@@ -481,16 +481,27 @@ type state = {
    * access we store a map node -> true.
    *)
   mutable complete : bool G.t;
+
+  (* List of nodes which failed. *)
+  mutable failed : bool G.t;
 }
 
 let new_state (dag, sorted_nodes) goal_runner exists_runner =
-  { dag; goal_runner; exists_runner; sorted_nodes; complete = G.empty }
+  { dag; goal_runner; exists_runner; sorted_nodes;
+    complete = G.empty; failed = G.empty }
 
 (* Called by [Jobs] when a node completes successfully.  We mark
  * it as done.
  *)
 let retire_job state node =
   state.complete <- G.add node true state.complete
+
+(* Called by [Jobs] when a node fails.  We mark the node as
+ * failed and ensure that anything that depends on it will
+ * also be marked as failed (and never returned by next_job).
+ *)
+let fail_job state node =
+  state.failed <- G.add node true state.failed
 
 let rec next_job state =
   (* Find the earliest node in the list which has all its
@@ -499,25 +510,41 @@ let rec next_job state =
   let rec loop acc = function
     | [] ->
        if state.sorted_nodes = [] then Jobs.Complete else Jobs.Not_ready
-    | node :: nodes ->
-       if node_is_ready_to_run state node then (
-         state.sorted_nodes <- List.rev acc @ nodes;
-         match node with
-         | Goal (env, loc, name, args, goal, extra_deps, debug_goal) ->
-            Jobs.Job (node, fun () ->
-                            state.goal_runner env loc name args goal
-                              extra_deps debug_goal)
-         | Exists (env, loc, p, debug_tactic) ->
-            Jobs.Job (node, fun () ->
-                            state.exists_runner env loc p debug_tactic)
+    | node :: nodes when node_is_ready_to_run state node ->
+       (* Drop the node from the list of jobs and run it. *)
+       state.sorted_nodes <- List.rev acc @ nodes;
+       (match node with
+        | Goal (env, loc, name, args, goal, extra_deps, debug_goal) ->
+           Jobs.Job (node, fun () ->
+                           state.goal_runner env loc name args goal
+                             extra_deps debug_goal)
+        | Exists (env, loc, p, debug_tactic) ->
+           Jobs.Job (node, fun () ->
+                           state.exists_runner env loc p debug_tactic)
        )
-       else
-         loop (node :: acc) nodes
+    | node :: nodes when node_failed state node ->
+       (* Mark it as failed also, and drop it from the list of jobs. *)
+       fail_job state node;
+       state.sorted_nodes <- List.rev acc @ nodes;
+       loop acc nodes
+    | node :: nodes ->
+       (* All dependencies of this node are neither complete nor failed,
+        * continue down the list.
+        *)
+       loop (node :: acc) nodes
   in
   loop [] state.sorted_nodes
 
+(* All dependencies of this node are complete. *)
 and node_is_ready_to_run { dag; complete } node =
   let parents = try G.find node dag.edges with Not_found -> [] in
   List.for_all (fun p -> G.mem p complete) parents
+
+(* This node or any dependency of this node failed. *)
+and node_failed { dag; failed } node =
+  G.mem node failed || (
+    let parents = try G.find node dag.edges with Not_found -> [] in
+    List.exists (fun p -> G.mem p failed) parents
+  )
 
 let string_of_job  = string_of_node

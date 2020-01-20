@@ -51,6 +51,9 @@ val includes : unit -> string list
 val nr_jobs : unit -> int
 (** Number of jobs (-j option). *)
 
+val keep_going : unit -> bool
+(** Keep-going mode (-k option). *)
+
 val silent : unit -> bool
 (** Silent operation (-s option). *)
 

@@ -46,6 +46,7 @@ val new_state : t -> goal_runner -> exists_runner -> state
 type node
 
 val retire_job : state -> node -> unit
+val fail_job : state -> node -> unit
 (** See {!Jobs.run}. *)
 
 val next_job : state -> node Jobs.next

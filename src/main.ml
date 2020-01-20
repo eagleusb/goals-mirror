@@ -84,8 +84,9 @@ let main () =
   let state = Deps.new_state dag Run.goal_runner Run.exists_runner in
   let next_job () = Deps.next_job state in
   let retire_job job = Deps.retire_job state job in
+  let fail_job job = Deps.fail_job state job in
   let string_of_job job = Deps.string_of_job job in
-  Jobs.run next_job retire_job string_of_job
+  Jobs.run next_job retire_job fail_job string_of_job
 
 let () =
   try main ()

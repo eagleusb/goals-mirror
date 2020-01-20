@@ -1,0 +1,59 @@
+# Goals test.
+# Copyright (C) 2020 Richard W.M. Jones
+# Copyright (C) 2020 Red Hat Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# This tests the behaviour of the keep-going (-k) option.  This
+# should build as many targets as possible.  The tree of goals
+# looks like this:
+#
+#              fail3
+#             /
+#        fail1           good3       good6
+#      /                 /           /
+#  all  --- good1 --- good2 --- fail2
+#      \                             \
+#        good4 --- good5             good7 -- good8..20
+#
+# The following goals should run:
+#   fail2, fail3, good3, good4, good5, good6, good7, good8..20
+# The following goals should NOT run:
+#   all, fail1, good1, good2
+
+goal all   = : fail1, good1, good4 { echo ALL }
+goal fail1 = : fail3        { echo FAIL1; exit 1 }
+goal fail2 = : good6, good7 { echo FAIL2; exit 1 }
+goal fail3 =                { echo FAIL3; exit 1 }
+goal good1 = : good2        { echo GOOD1 }
+goal good2 = : good3, fail2 { echo GOOD2 }
+goal good3 =                { echo GOOD3 }
+goal good4 = : good5        { echo GOOD4 }
+goal good5 =                { echo GOOD5 }
+goal good6 =                { echo GOOD6 }
+goal good7 = : good8        { echo GOOD7 }
+goal good8 = : good9        { echo GOOD8 }
+goal good9 = : good10       { echo GOOD9 }
+goal good10 = : good11      { echo GOOD10 }
+goal good11 = : good12      { echo GOOD11 }
+goal good12 = : good13      { echo GOOD12 }
+goal good13 = : good14      { echo GOOD13 }
+goal good14 = : good15      { echo GOOD14 }
+goal good15 = : good16      { echo GOOD15 }
+goal good16 = : good17      { echo GOOD16 }
+goal good17 = : good18      { echo GOOD17 }
+goal good18 = : good19      { echo GOOD18 }
+goal good19 = : good20      { echo GOOD19 }
+goal good20 =               { echo GOOD20 }

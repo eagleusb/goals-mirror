@@ -21,7 +21,7 @@ open Utils
 
 type 'a next = Job of 'a * (unit -> unit) | Complete | Not_ready
 
-let run next_job retire_job string_of_job =
+let run next_job retire_job fail_job string_of_job =
   (* Number of running threads <= Cmdline.nr_jobs. *)
   let running = ref 0 in
 
@@ -38,7 +38,9 @@ let run next_job retire_job string_of_job =
     Mutex.lock lock;
     (match exn with
      | None -> retire_job job
-     | Some exn -> last_exn := exn :: !last_exn
+     | Some exn ->
+        last_exn := exn :: !last_exn;
+        fail_job job
     );
     decr running;
     Condition.signal cond;
@@ -46,7 +48,8 @@ let run next_job retire_job string_of_job =
   in
 
   let rec loop () =
-    if !last_exn = [] then (
+    let continue = !last_exn = [] || Cmdline.keep_going () in
+    if continue then (
       match next_job () with
       | Complete -> ()
       | Not_ready ->

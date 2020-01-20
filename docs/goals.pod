@@ -9,7 +9,7 @@ goals - an experimental tool that generalizes “make”
  goals ['TARGET'] ['VAR=VALUE']
        [-C|--directory DIRECTORY] [-d] [-f|--file Goalfile]
        [-I|--include DIRECTORY] [-j|--jobs JOBS] [--no-prelude]
-       [-s|--silent|--quiet]
+       [-k|--keep-going] [-s|--silent|--quiet]
 
  goals --help
 
@@ -89,6 +89,15 @@ Do not load F<prelude.gl> from C<%stdlib>.  The default is that the
 prelude is always loaded automatically before any initial goal file
 (but you can redefine prelude definitions in your goal file if you
 want).
+
+=item B<-k>
+
+=item B<--keep-going>
+
+Continue as much as possible after an error.  The target that failed
+and anything that depends on that target (recursively) will fail and
+the program as a whole will still exit with an error, but as many
+targets as can be built will be built.
 
 =item B<-s>
 
