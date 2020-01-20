@@ -12,9 +12,11 @@
 .depend
 Goalfile
 Makefile
+Makefile.in
 
 /aclocal.m4
 /autom4te.cache/
+/compile
 /configure
 /config.h
 /config.h.in
@@ -26,6 +28,7 @@ Makefile
 /local*
 /man/*.?
 /man/*.?.txt
+/missing
 /run
 /src/config.ml
 /src/goals
@@ -35,3 +38,4 @@ Makefile
 /src/parser.mli
 /src/stamp-parser
 /stamp-h
+/stamp-h1

@@ -1,6 +1,6 @@
 # Goals
-# Copyright (C) 2019 Richard W.M. Jones
-# Copyright (C) 2019 Red Hat Inc.
+# Copyright (C) 2019-2020 Richard W.M. Jones
+# Copyright (C) 2019-2020 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 
 AC_INIT([goals], [0.2])
 AC_CONFIG_MACRO_DIR([m4])
+
+AM_INIT_AUTOMAKE(foreign) dnl Do not quote this parameter.
 
 AC_PROG_INSTALL
 

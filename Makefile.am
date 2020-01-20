@@ -1,6 +1,6 @@
 # Goals
-# Copyright (C) 2019 Richard W.M. Jones
-# Copyright (C) 2019 Red Hat Inc.
+# Copyright (C) 2019-2020 Richard W.M. Jones
+# Copyright (C) 2019-2020 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,13 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # Pass through normal targets to Goalfile.in
+#
+# These will override the automake targets printing warnings which
+# can be ignored.
 
-all clean depend install check maintainer-clean dist distcheck \
+all clean depend install check \
+dist distcheck \
+maintainer-clean \
 maintainer-commit maintainer-tag \
 maintainer-check-extra-dist maintainer-release \
 maintainer-srpm maintainer-fedora-copr: src/goals
@@ -27,13 +32,6 @@ maintainer-srpm maintainer-fedora-copr: src/goals
 # If src/goals doesn't exist then brute-force build it.  Once we have
 # src/goals we can rebuild it and other parts of the project using
 # goals itself (see Goalfile.in).
-
-MENHIR = @MENHIR@
-OCAMLDEP = @OCAMLDEP@
-OCAMLFIND = @OCAMLFIND@
-OCAMLLEX = @OCAMLLEX@
-OCAMLFLAGS = @OCAMLFLAGS@
-OCAMLPACKAGES = @OCAMLPACKAGES@
 
 src/goals:
 	$(MENHIR) --explain src/parser.mly
@@ -45,26 +43,3 @@ src/goals:
 	    src/utils-c.c \
 	    $$($(OCAMLDEP) -sort src/*.mli src/*.ml) \
 	    -linkpkg -o $@
-
-# These rules are required by autoconf.
-config.h: stamp-h
-stamp-h: config.h.in config.status
-	./config.status config.h
-	touch $@
-
-Makefile: Makefile.in config.status
-	./config.status $@
-
-run: run.in config.status
-	./config.status $@
-
-$(srcdir)/configure: configure.ac aclocal.m4
-	cd '$(srcdir)' && autoconf
-
-$(srcdir)/config.h.in: stamp-h.in
-$(srcdir)/stamp-h.in: configure.ac aclocal.m4
-	cd '$(srcdir)' && autoheader
-	echo timestamp > '$(srcdir)/stamp-h.in'
-
-config.status: configure
-	./config.status --recheck
