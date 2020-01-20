@@ -14,6 +14,11 @@ Goalfile - introduction, tutorial, and reference for writing goal files
 
 =head2 Standard Variables
 
+=head3 %stdlib
+
+The path to the standard library directory.  This path is also
+searched by default for C<include> directives.
+
 =head3 %tmpdir
 
 The location of a temporary directory which is created by goals when
