@@ -29,7 +29,7 @@ let run next_job retire_job string_of_job =
   let lock = Mutex.create () and cond = Condition.create () in
 
   (* If a job throws an exception it is saved here. *)
-  let last_exn = ref None in
+  let last_exn = ref [] in
 
   (* This is the background thread which runs each job. *)
   let runner (job, f) =
@@ -38,7 +38,7 @@ let run next_job retire_job string_of_job =
     Mutex.lock lock;
     (match exn with
      | None -> retire_job job
-     | Some exn -> last_exn := Some exn
+     | Some exn -> last_exn := exn :: !last_exn
     );
     decr running;
     Condition.signal cond;
@@ -46,7 +46,7 @@ let run next_job retire_job string_of_job =
   in
 
   let rec loop () =
-    if !last_exn = None then (
+    if !last_exn = [] then (
       match next_job () with
       | Complete -> ()
       | Not_ready ->
@@ -78,10 +78,19 @@ let run next_job retire_job string_of_job =
     Condition.wait cond lock
   done;
 
-  let exn = !last_exn in
+  let exns = !last_exn in
   Mutex.unlock lock;
 
-  (* Re-raise the saved exception from the job which failed. *)
-  match exn with
-  | None -> ()
-  | Some exn -> raise exn
+  (* Re-raise the saved exception(s) from the job(s) which failed. *)
+  match exns with
+  | [] -> ()
+  | [exn] -> raise exn
+  | exns ->
+     (* Combine the multiple exceptions into a single Failure exn. *)
+     let exns = List.rev exns in
+     let exn_to_string = function
+       | Failure s -> s
+       | exn -> Printexc.to_string exn in
+     let exns = List.map exn_to_string exns in
+     let exns = String.concat "\n" exns in
+     raise (Failure exns)
