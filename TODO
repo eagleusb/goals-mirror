@@ -40,3 +40,7 @@ but it evaluates the output of a function as Goalfile syntax).
 Implement make-like “origin” function.  This is easy but it requires
 us to track to the origin of definitions which we do not do at
 the moment.
+
+Some kind of “source” directive.  If goals sees this then
+it automatically sources the parameter (a shell script) into
+every shell command.
