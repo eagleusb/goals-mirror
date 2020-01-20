@@ -28,7 +28,7 @@ type node =
 
 let string_of_node = function
   | Goal (_, _, _, _, _, _, debug_goal) -> debug_goal
-  | Exists (_, _, _, debug_tactic) -> debug_tactic
+  | Exists (_, _, _, debug_pred) -> debug_pred
 
 let compare_nodes n1 n2 =
   match n1, n2 with
@@ -182,7 +182,7 @@ and add_targets dag ?parent env roots =
   List.fold_left (fun dag root -> add_target dag ?parent env root) dag roots
 
 and add_target dag ?parent env = function
-  | Ast.EGoalDefn _ | Ast.EFuncDefn _ | Ast.ETacticDefn _ -> assert false
+  | Ast.EGoalDefn _ | Ast.EFuncDefn _ | Ast.EPredDefn _ -> assert false
 
   (* Call a goal or function. *)
   | Ast.ECall (loc, name, args) ->
@@ -198,13 +198,13 @@ and add_target dag ?parent env = function
            Ast.string_loc loc name
      )
 
-  (* Call a tactic. *)
-  | Ast.ETacticCtor (loc, name, args) ->
-     (* All parameters of tactics must be simple constant expressions
+  (* Call a predicate. *)
+  | Ast.EPredCtor (loc, name, args) ->
+     (* All parameters of predicates must be simple constant expressions
       * (strings, in future booleans, numbers, etc).
       *)
      let args = List.map (Eval.to_constant env) args in
-     add_tactic dag ?parent env loc name args
+     add_pred dag ?parent env loc name args
 
   (* If this is a goal then it's the same as calling goal().  If not
    * then look up the variable and substitute it.
@@ -225,13 +225,13 @@ and add_target dag ?parent env = function
   | Ast.EList (loc, exprs) ->
      add_targets dag ?parent env exprs
 
-  (* A string (with or without substitutions) implies *file(filename). *)
+  (* A string (with or without substitutions) implies is-file(filename). *)
   | Ast.ESubsts (loc, str) ->
      let str = Eval.substitute env loc str in
-     add_tactic dag ?parent env loc "*file" [Ast.CString str]
+     add_pred dag ?parent env loc "is-file" [Ast.CString str]
 
   | Ast.EConstant (loc, c) ->
-     add_tactic dag ?parent env loc "*file" [c]
+     add_pred dag ?parent env loc "is-file" [c]
 
 (* Add a goal by name. *)
 and add_goal dag ?parent env loc name args
@@ -269,16 +269,16 @@ and add_goal dag ?parent env loc name args
   (* Add all dependencies. *)
   add_targets dag ~parent:node env (deps @ extra_deps)
 
-(* Find the goal which matches the given tactic and add it.
+(* Find the goal which matches the given predicate and add it.
  * cargs is a list of parameters (all constants).
  *)
-and add_tactic dag ?parent env loc tactic cargs =
-  (* This is used to print the tactic in debug and error messages only. *)
-  let debug_tactic =
+and add_pred dag ?parent env loc pred cargs =
+  (* This is used to print the predicate in debug and error messages only. *)
+  let debug_pred =
     Ast.string_expr ()
-      (Ast.ETacticCtor (loc, tactic,
+      (Ast.EPredCtor (loc, pred,
                         List.map (fun c -> Ast.EConstant (loc, c)) cargs)) in
-  Cmdline.debug "%a: adding tactic %s" Ast.string_loc loc debug_tactic;
+  Cmdline.debug "%a: adding predicate %s" Ast.string_loc loc debug_pred;
 
   (* Find all goals in the environment.  Returns a list of (name, goal). *)
   let goals =
@@ -294,14 +294,14 @@ and add_tactic dag ?parent env loc tactic cargs =
       (List.map (fun (name, ((_, patterns, _, _) as goal)) ->
            List.map (fun pattern -> (pattern, name, goal)) patterns) goals) in
 
-  (* Find any patterns (ie. tactics) which match the one we
+  (* Find any patterns (ie. predicates) which match the one we
    * are searching for.  This returns a binding for the goal args,
    * so we end up with a list of (pattern, name, goal, args).
    *)
   let patterns : (Ast.pattern * Ast.id * Ast.goal * Ast.expr list) list =
     filter_map (
       fun (pattern, name, ((params, _, _, _) as goal)) ->
-        match matching_pattern env loc tactic cargs pattern params with
+        match matching_pattern env loc pred cargs pattern params with
         | None -> None
         | Some args -> Some (pattern, name, goal, args)
     ) patterns in
@@ -309,14 +309,14 @@ and add_tactic dag ?parent env loc tactic cargs =
   match patterns with
   | [] ->
      (* There's no matching goal, but we don't need one if
-      * the tactic doesn't need to be rebuilt.  So create a
-      * special Exists node which will be used to run the tactic
+      * the predicate doesn't need to be rebuilt.  So create a
+      * special Exists node which will be used to run the predicate
       * to see if the target needs to be rebuilt, and only fail
       * if it does need a rebuild.
       *)
      let targs = List.map (function Ast.CString s -> [Ast.SString s]) cargs in
-     let p = Ast.PTactic (loc, tactic, targs) in
-     let _, dag = add_node dag ?parent (Exists (env, loc, p, debug_tactic)) in
+     let p = Ast.PPred (loc, pred, targs) in
+     let _, dag = add_node dag ?parent (Exists (env, loc, p, debug_pred)) in
      dag
 
   | [_, name, goal, args] ->
@@ -355,23 +355,23 @@ and add_tactic dag ?parent env loc tactic cargs =
           (g, extra_deps)
 
        | _ :: _ ->
-          failwithf "%a: multiple goals found which match tactic %s, but more than one of these goals have {code} sections which is not allowed"
-            Ast.string_loc loc debug_tactic in
+          failwithf "%a: multiple goals found which match predicate %s, but more than one of these goals have {code} sections which is not allowed"
+            Ast.string_loc loc debug_pred in
 
      add_goal dag ?parent env loc name args goal extra_deps
 
-(* Test if pattern matches *tactic(cargs).  If it does
+(* Test if pattern matches is-predicate(cargs).  If it does
  * then we return Some args where args is the arguments that must
  * be passed to the matching goal.  The params parameter is
  * the names of the parameters of that goal.
  *)
-and matching_pattern env loc tactic cargs pattern params =
+and matching_pattern env loc pred cargs pattern params =
   match pattern with
-  | Ast.PTactic (loc, ttactic, targs)
-       when tactic <> ttactic ||
+  | Ast.PPred (loc, tpred, targs)
+       when pred <> tpred ||
             List.length cargs <> List.length targs ->
-     None (* Can't possibly match if tactic name or #args is different. *)
-  | Ast.PTactic (loc, ttactic, targs) ->
+     None (* Can't possibly match if predicate name or #args is different. *)
+  | Ast.PPred (loc, tpred, targs) ->
      (* Do the args match with a possible params binding? *)
      try Some (matching_params env loc params targs cargs)
      with Not_found -> None
@@ -518,9 +518,9 @@ let rec next_job state =
            Jobs.Job (node, fun () ->
                            state.goal_runner env loc name args goal
                              extra_deps debug_goal)
-        | Exists (env, loc, p, debug_tactic) ->
+        | Exists (env, loc, p, debug_pred) ->
            Jobs.Job (node, fun () ->
-                           state.exists_runner env loc p debug_tactic)
+                           state.exists_runner env loc p debug_pred)
        )
     | node :: nodes when node_failed state node ->
        (* Mark it as failed also, and drop it from the list of jobs. *)

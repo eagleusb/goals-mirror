@@ -178,11 +178,11 @@ files using ordinary globbing rules.
 
 For example:
 
- wrap ("*file", ["bar.c", "foo.c"]) ⇒ [*file("bar.c"), *file("foo.c")]
+ wrap ("is-file", ["bar.c", "foo.c"]) ⇒ [is-file("bar.c"), is-file("foo.c")]
 
 Each element in C<list> is wrapped into a call to C<wrapper(element)>.
-There are two common uses for this: either to add explicit tactics
-(such as C<*file>) to a plain list of strings as in the example above;
+There are two common uses for this: either to add explicit predicates
+(such as C<is-file>) to a plain list of strings as in the example above;
 or to turn a list of strings into a list of goal or function calls.
 
 =head1 SEE ALSO

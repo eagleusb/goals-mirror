@@ -318,7 +318,7 @@ goal maintainer-release = : dist,
 
 let websitedir = "%HOME/d/websites/people.redhat.com/goals"
 
-# XXX Should actually use the *url tactic here.
+# XXX Should actually use the is-url predicate here.
 goal maintainer-upload = : distcheck {
     [ -d %websitedir ]
     cp %tarfile %websitedir/files

@@ -14,13 +14,13 @@ gotchas when you actually write shell commands.
 Goals is an experimental tool which aims to generalize make beyond
 these limitations.  It works for any resource, not just files:
 
-  *url("https://example.com/uploads/software.tar.gz";) : "software.tar.gz" {
+  is-url("https://example.com/uploads/software.tar.gz";) : "software.tar.gz" {
     scp %< example.com:/web/uploads/
   }
 
-(You can write your own "tactics" like the *url in the example above).
+(You can write your own "predicates" like is-url in the example above).
 Goal recipes can be named, and can be called either by name or by
-automatically finding a matching tactic:
+automatically finding a matching predicate:
 
   goal rebuild (pkg) = "%pkg.o" : "%pkg.c" { %CC %CFLAGS -c %< -o %@ }
 
@@ -53,13 +53,13 @@ in the Fedora build system (called Koji):
     cd %HOME/fedora
     echo '['
     for f in perl*; do
-      test -f $f/$f.spec && echo '    *built-in-koji("'$f'"),'
+      test -f $f/$f.spec && echo '    is-koji-built("'$f'"),'
     done
     echo ']'
   }
 
   goal rebuild (name) =
-  *built-in-koji ("%name") : build-requires (name) {
+  is-koji-built ("%name") : build-requires (name) {
     cd %HOME/fedora/%name
     rpmdev-bumpspec %name.spec
     fedpkg commit -c
@@ -72,7 +72,7 @@ in the Fedora build system (called Koji):
     # source BuildRequires
   }
 
-  tactic *built-in-koji (name) = {
+  predicate is-koji-built (name) = {
     # shell commands to check if latest NVR of %name from the spec
     # file matches the latest successful build in Koji
   }

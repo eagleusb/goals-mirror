@@ -41,8 +41,8 @@ let rec goal_runner env loc name args
         (* Add some standard variables to the environment. *)
         let expr_of_substs s = Ast.ESubsts (Ast.noloc, s) in
         let expr_of_pattern = function
-          | Ast.PTactic (loc, tactic, targs) ->
-             Ast.ETacticCtor (loc, tactic, List.map expr_of_substs targs)
+          | Ast.PPred (loc, pred, targs) ->
+             Ast.EPredCtor (loc, pred, List.map expr_of_substs targs)
         in
         let pexprs = List.map expr_of_pattern patterns in
         let env = Ast.Env.add "@" (Ast.EList (Ast.noloc, pexprs)) env in
@@ -83,13 +83,13 @@ and needs_rebuild ?(final_check = false) env loc deps extra_deps pattern =
     Ast.string_loc loc Ast.string_pattern pattern;
 
   match pattern with
-  | Ast.PTactic (loc, tactic, targs) ->
-     (* Look up the tactic. *)
-     let params, code = Ast.gettactic env loc tactic in
+  | Ast.PPred (loc, pred, targs) ->
+     (* Look up the predicate. *)
+     let params, code = Ast.getpred env loc pred in
 
      (* Resolve the targs down to constants.  Since needs_rebuild
       * should be called with env containing the goal params, this
-      * should substitute any parameters in the tactic arguments.
+      * should substitute any parameters in the predicate arguments.
       *)
      let targs = List.map (Eval.substitute env loc) targs in
      let targs =
@@ -97,14 +97,14 @@ and needs_rebuild ?(final_check = false) env loc deps extra_deps pattern =
            Ast.EConstant (Ast.noloc, Ast.CString targ)) targs in
 
      (* Create a new environment binding parameter names
-      * to tactic args.
+      * to predicate args.
       *)
      let env =
        let params =
          try List.combine params targs
          with Invalid_argument _ ->
-           failwithf "%a: calling tactic ‘%s’ with wrong number of arguments"
-             Ast.string_loc loc tactic in
+           failwithf "%a: calling predicate ‘%s’ with wrong number of arguments"
+             Ast.string_loc loc pred in
        List.fold_left (fun env (k, v) -> Ast.Env.add k v env) env params in
 
      (* Add some standard variables to the environment. *)
@@ -123,13 +123,13 @@ and needs_rebuild ?(final_check = false) env loc deps extra_deps pattern =
      if r = 99 (* means "needs rebuild" *) then true
      else if r = 0 (* means "doesn't need rebuild" *) then false
      else
-       failwithf "%a: tactic ‘%s’ failed with exit code %d"
-         Ast.string_loc loc tactic r
+       failwithf "%a: predicate ‘%s’ failed with exit code %d"
+         Ast.string_loc loc pred r
 
-and exists_runner env loc p debug_tactic =
-  Cmdline.debug "%a: running implicit existence rule for tactic %s"
-    Ast.string_loc loc debug_tactic;
+and exists_runner env loc p debug_pred =
+  Cmdline.debug "%a: running implicit existence rule for predicate %s"
+    Ast.string_loc loc debug_pred;
 
   if needs_rebuild env loc [] [] p then
     failwithf "%a: don't know how to build ‘%s’"
-      Ast.string_loc loc debug_tactic
+      Ast.string_loc loc debug_pred

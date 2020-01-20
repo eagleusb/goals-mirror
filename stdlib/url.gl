@@ -16,12 +16,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-# Tactics for dealing with URLs.  These require the curl command
+# Predicates for dealing with URLs.  These require the curl command
 # line tool.
 
-# XXX tactic *url
+# XXX predicate is-url
 
 # Check only if a URL exists without considering its age.
-tactic *url_exists (url) = {
+predicate is-url-exists (url) = {
     curl --output /dev/null --silent --head --fail %url || exit 99
 }

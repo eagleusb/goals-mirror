@@ -34,13 +34,13 @@ type goal_runner =
 (** Run a single goal. *)
 
 type exists_runner = Ast.env -> Ast.loc -> Ast.pattern -> string -> unit
-(** Run an existence tactic. *)
+(** Run an existence predicate. *)
 
 val new_state : t -> goal_runner -> exists_runner -> state
 (** Create a new state object from the DAG.
 
     [goal_runner] is a function for running single goals.
-    [exists_runner] is a function for running existence tactics.
+    [exists_runner] is a function for running existence predicates.
     See the {!Run} module. *)
 
 type node

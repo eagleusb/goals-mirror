@@ -50,7 +50,7 @@
 
 # Check if the source package has been built in Koji.
 
-tactic *koji-built (pkg) = {
+predicate is-koji-built (pkg) = {
     cd %fedora-dir/%pkg/%fedora-branch
     koji=%koji
     specfile=%pkg.spec
@@ -98,7 +98,8 @@ tactic *koji-built (pkg) = {
 # Rebuild a Fedora package.  This rebuilds any dependencies first.
 
 goal fedora-rebuild (pkg) =
-*koji-built ("%pkg") : wrap ("*koji-built", fedora-source-dependencies (pkg)) {
+is-koji-built ("%pkg") : wrap ("is-koji-built",
+                               fedora-source-dependencies (pkg)) {
     cd %fedora-dir/%pkg/%fedora-branch
     fedpkg=%fedpkg
     koji=%koji

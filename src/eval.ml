@@ -55,8 +55,8 @@ let rec to_constant env = function
            Ast.string_loc loc name
      )
 
-  | ETacticCtor (loc, name, _) ->
-     failwithf "%a: cannot use tactic ‘%s’ in constant expression"
+  | EPredCtor (loc, name, _) ->
+     failwithf "%a: cannot use predicate ‘%s’ in constant expression"
        Ast.string_loc loc name
 
   | EGoalDefn (loc, _) ->
@@ -67,8 +67,8 @@ let rec to_constant env = function
      failwithf "%a: cannot use function in constant expression"
        Ast.string_loc loc
 
-  | ETacticDefn (loc, _) ->
-     failwithf "%a: cannot use tactic in constant expression"
+  | EPredDefn (loc, _) ->
+     failwithf "%a: cannot use predicate in constant expression"
        Ast.string_loc loc
 
 and substitute env loc substs =
@@ -128,9 +128,9 @@ and expr_to_shell_string env = function
            Ast.string_loc loc name
      )
 
-  (* Tactics expand to the first parameter. *)
-  | ETacticCtor (loc, _, []) -> Filename.quote ""
-  | ETacticCtor (loc, _, (arg :: _)) -> expr_to_shell_string env arg
+  (* Predicates expand to the first parameter. *)
+  | EPredCtor (loc, _, []) -> Filename.quote ""
+  | EPredCtor (loc, _, (arg :: _)) -> expr_to_shell_string env arg
 
   | EGoalDefn (loc, _) ->
      failwithf "%a: cannot use goal in shell expansion"
@@ -140,8 +140,8 @@ and expr_to_shell_string env = function
      failwithf "%a: cannot use function in shell expansion"
        Ast.string_loc loc
 
-  | ETacticDefn (loc, _) ->
-     failwithf "%a: cannot use tactic in shell expansion"
+  | EPredDefn (loc, _) ->
+     failwithf "%a: cannot use predicate in shell expansion"
        Ast.string_loc loc
 
 and run_code env loc code =
@@ -206,8 +206,8 @@ and evaluate_goal_arg env = function
   | EList (loc, exprs) ->
      Ast.EList (loc, List.map (evaluate_goal_arg env) exprs)
 
-  | ETacticCtor (loc, name, exprs) ->
-     Ast.ETacticCtor (loc, name, List.map (evaluate_goal_arg env) exprs)
+  | EPredCtor (loc, name, exprs) ->
+     Ast.EPredCtor (loc, name, List.map (evaluate_goal_arg env) exprs)
 
   | ECall (loc, name, args) ->
      let expr = Ast.getvar env loc name in
@@ -230,7 +230,7 @@ and evaluate_goal_arg env = function
   | EConstant _
   | EGoalDefn _
   | EFuncDefn _
-  | ETacticDefn _ as e -> e
+  | EPredDefn _ as e -> e
 
 (* Functions are only called from goal args or when substituting
  * into a shell script or constant expression (this may change if we

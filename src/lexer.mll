@@ -53,8 +53,8 @@ rule read =
     | "{"     { read_code false (Ast.Substs.create ()) (ref 1) lexbuf }
     | "@{"    { read_code true  (Ast.Substs.create ()) (ref 1) lexbuf }
     | "goal"  { GOAL }
-    | "tactic"
-              { TACTIC_KEYWORD }
+    | "predicate"
+              { PREDICATE }
     | "function"
               { FUNCTION }
     | "pure"  { PURE }
@@ -71,8 +71,9 @@ rule read =
               { STRING_KEYWORD }
     | "strings"
               { STRINGS }
-    | "*" id  { (* NB: The initial '*' is part of the name. *)
-                TACTIC (Lexing.lexeme lexbuf) }
+    | "is-" id
+              { (* NB: The initial 'is-' is part of the name. *)
+                PRED (Lexing.lexeme lexbuf) }
     | id      { ID (Lexing.lexeme lexbuf) }
     | _       { raise (SyntaxError ("unexpected character: " ^
                                     Lexing.lexeme lexbuf)) }

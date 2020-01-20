@@ -7,9 +7,10 @@ You might only allow defaults to be added to the end, or you
 might allow goals to be called with labelled parameters.
 
 Deleting target files if goals is interrupted, but only if the
-timestamp changes (what about non-*files?).  Also: atomic code.  This
-will delete the target if the code doesn't run to completion.  (make
-doesn't do this, but probably it should).
+timestamp changes (what about things which are not is-files?).
+Also: atomic code.  This will delete the target if the code
+doesn't run to completion.  (make doesn't do this, but
+probably it should).
 
 Conditional sections (same as "ifeq" etc in make).
 

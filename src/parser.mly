@@ -82,8 +82,8 @@ let do_include env loc filename optflag file =
 %token <Ast.substs> STRING
 %token STRING_KEYWORD
 %token STRINGS
-%token <string> TACTIC
-%token TACTIC_KEYWORD
+%token <string> PRED
+%token PREDICATE
 
 (* Start nonterminals. *)
 %start <Ast.expr Ast.Env.t> file
@@ -126,9 +126,9 @@ stmt:
     {
       $3, Ast.EFuncDefn ($loc, ($4, $5, $1 <> None, $7))
     }
-    | TACTIC_KEYWORD TACTIC params_decl EQUALS CODE
+    | PREDICATE PRED params_decl EQUALS CODE
     {
-      $2, Ast.ETacticDefn ($loc, ($3, $5))
+      $2, Ast.EPredDefn ($loc, ($3, $5))
     }
     | LET ID EQUALS expr { $2, $4 }
     ;
@@ -152,8 +152,8 @@ patterns:
     | separated_list(COMMA, pattern) { $1 }
     ;
 pattern:
-    | STRING     { Ast.PTactic ($loc, "*file", [$1]) }
-    | TACTIC pattern_params { Ast.PTactic ($loc, $1, $2) }
+    | STRING     { Ast.PPred ($loc, "is-file", [$1]) }
+    | PRED pattern_params { Ast.PPred ($loc, $1, $2) }
     ;
 pattern_params:
     | LEFT_PAREN separated_list(COMMA, pattern_param) RIGHT_PAREN { $2 }
@@ -165,7 +165,7 @@ pattern_param:
 expr:
     | ID params  { Ast.ECall ($loc, $1, $2) }
     | ID         { Ast.EVar ($loc, $1) }
-    | TACTIC params { Ast.ETacticCtor ($loc, $1, $2) }
+    | PRED params { Ast.EPredCtor ($loc, $1, $2) }
     | STRING     { Ast.ESubsts ($loc, $1) }
     | LEFT_ARRAY barelist RIGHT_ARRAY { Ast.EList ($loc, $2) }
     ;

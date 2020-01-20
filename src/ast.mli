@@ -41,19 +41,19 @@ val string_loc : unit -> loc -> string
     variable or goal name -> expression. *)
 type env = expr Env.t
 and pattern =
-  | PTactic of loc * id * substs list
-  (** match tactic such as *file ("filename") *)
+  | PPred of loc * id * substs list
+  (** match predicate such as is-file ("filename") *)
 and expr =
   | EGoalDefn of loc * goal
   (** goal (params) = patterns : exprs code *)
   | EFuncDefn of loc * func
   (** function (params) = code *)
-  | ETacticDefn of loc * tactic
-  (** tactic (params) = code *)
+  | EPredDefn of loc * pred
+  (** predicate (params) = code *)
   | ECall of loc * id * expr list
   (** call goal (params) or function (params) *)
-  | ETacticCtor of loc * id * expr list
-  (** constructor *tactic (params) *)
+  | EPredCtor of loc * id * expr list
+  (** constructor is-predicate (params) *)
   | EVar of loc * id
   (** variable, or goal call with no parameters *)
   | EList of loc * expr list
@@ -66,8 +66,8 @@ and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
 and func = param_decl list * returning * bool * code
-and tactic = param_decl list * code
-and param_decl = id             (** goal/func/tactic parameter. *)
+and pred = param_decl list * code
+and param_decl = id             (** goal/func/pred parameter. *)
 and id = string
 and code = substs * bool        (** code + quiet flag *)
 and returning = RetExpr | RetStrings | RetString
@@ -90,9 +90,9 @@ val getfunc : env -> loc -> id -> func
 (** Look up a function in the environment.  Raise [Failure _] if not
     found or if the named variable is not a function. *)
 
-val gettactic : env -> loc -> id -> tactic
-(** Look up a tactic in the environment.  Raise [Failure _] if not
-    found or if the named variable is not a tactic. *)
+val getpred : env -> loc -> id -> pred
+(** Look up a predicate in the environment.  Raise [Failure _] if not
+    found or if the named variable is not a predicate. *)
 
 (** This is used for incrementally building Ast.substs in the parser. *)
 module Substs : sig

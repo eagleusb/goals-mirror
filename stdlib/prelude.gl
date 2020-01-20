@@ -18,10 +18,10 @@
 
 # This file is included first and automatically in all Goalfiles
 # (unless you use --no-prelude).  It contains standard functions and
-# tactics.
+# predicates.
 
-# The only tactic that ‘make’ has.
-tactic *file (filename) = @{
+# The only predicate that ‘make’ has.
+predicate is-file (filename) = @{
     # Rebuild if the target file doesn't exist at all.
     test -f %filename || exit 99
 
@@ -31,9 +31,9 @@ tactic *file (filename) = @{
     done
 }
 
-# This is a simpler tactic than the above since it will
+# This is a simpler predicate than the above since it will
 # rebuild if the file is missing, but not if it is older.
-tactic *exists (filename) = @{
+predicate is-file-exists (filename) = @{
     test -f %filename || exit 99
 }
 
@@ -45,7 +45,7 @@ function error (msg) = @{
     exit 1
 }
 
-# Wrap list of strings in a call or tactic.
+# Wrap list of strings in a call or predicate.
 pure function wrap (wrapper, xs) = @{
     echo '['
     for x in %xs; do

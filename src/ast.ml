@@ -40,13 +40,13 @@ let print_loc fp loc =
 
 type env = expr Env.t
 and pattern =
-  | PTactic of loc * id * substs list
+  | PPred of loc * id * substs list
 and expr =
   | EGoalDefn of loc * goal
   | EFuncDefn of loc * func
-  | ETacticDefn of loc * tactic
+  | EPredDefn of loc * pred
   | ECall of loc * id * expr list
-  | ETacticCtor of loc * id * expr list
+  | EPredCtor of loc * id * expr list
   | EVar of loc * id
   | EList of loc * expr list
   | ESubsts of loc * substs
@@ -55,7 +55,7 @@ and constant =
   | CString of string
 and goal = param_decl list * pattern list * expr list * code option
 and func = param_decl list * returning * bool * code
-and tactic = param_decl list * code
+and pred = param_decl list * code
 and param_decl = id
 and id = string
 and code = substs * bool
@@ -96,19 +96,19 @@ let getfunc env loc name =
          string_loc loc name in
   func
 
-let gettactic env loc name =
-  assert (name.[0] = '*');
+let getpred env loc name =
+  assert (String.length name >= 3 && String.sub name 0 3 = "is-");
   let expr =
     try Env.find name env
     with Not_found ->
-      failwithf "%a: tactic ‘%s’ not found" string_loc loc name in
-  let tactic =
+      failwithf "%a: predicate ‘%s’ not found" string_loc loc name in
+  let pred =
     match expr with
-    | ETacticDefn (loc, tactic) -> tactic
+    | EPredDefn (loc, pred) -> pred
     | _ ->
-       failwithf "%a: tried to call ‘%s’ which is not a tactic"
+       failwithf "%a: tried to call ‘%s’ which is not a predicate"
          string_loc loc name in
-  tactic
+  pred
 
 module Substs = struct
   type t = {
@@ -151,7 +151,7 @@ and string_def () (name, expr) =
   match expr with
   | EGoalDefn (loc, goal) -> string_goal () (Some name, goal) ^ "\n"
   | EFuncDefn (loc, func) -> string_func () (Some name, func) ^ "\n"
-  | ETacticDefn (loc, tactic) -> string_tactic () (Some name, tactic) ^ "\n"
+  | EPredDefn (loc, pred) -> string_pred () (Some name, pred) ^ "\n"
   | expr -> sprintf "let %s = %a\n" name string_expr expr;
 
 and print_def fp name expr = output_string fp (string_def () (name, expr))
@@ -176,8 +176,8 @@ and string_func () (name, (param_decls, returning, pure, (code, quiet))) =
     (String.concat ", " (List.map (string_param_decl ()) param_decls))
     (if quiet then "@" else "")
 
-and string_tactic () (name, (param_decls, (code, quiet))) =
-  sprintf "tactic%s (%s) = %s{ ... }"
+and string_pred () (name, (param_decls, (code, quiet))) =
+  sprintf "predicate%s (%s) = %s{ ... }"
     (match name with None -> "" | Some name -> " " ^ name)
     (String.concat ", " (List.map (string_param_decl ()) param_decls))
     (if quiet then "@" else "")
@@ -185,7 +185,7 @@ and string_tactic () (name, (param_decls, (code, quiet))) =
 and string_param_decl () name = name
 
 and string_pattern () = function
-  | PTactic (loc, name, params) ->
+  | PPred (loc, name, params) ->
      sprintf "%s (%s)" name (String.concat ", "
                                 (List.map (string_substs ()) params))
 
@@ -194,11 +194,11 @@ and print_pattern fp p = output_string fp (string_pattern () p)
 and string_expr () = function
   | EGoalDefn (loc, goal) -> string_goal () (None, goal)
   | EFuncDefn (loc, func) -> string_func () (None, func)
-  | ETacticDefn (loc, goal) -> string_tactic () (None, goal)
+  | EPredDefn (loc, goal) -> string_pred () (None, goal)
   | ECall (loc, name, params) ->
      sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))
-  | ETacticCtor (loc, name, params) ->
+  | EPredCtor (loc, name, params) ->
      sprintf "%s (%s)"
        name (String.concat ", " (List.map (string_expr ()) params))
   | EVar (loc, var) -> var

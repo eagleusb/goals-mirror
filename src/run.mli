@@ -21,11 +21,11 @@ val goal_runner : Deps.goal_runner
 (** Run a single goal. *)
 
 val exists_runner : Deps.exists_runner
-(** Run the implicit existence tactic.
+(** Run the implicit existence predicate.
 
-    This is used when we find a tactic like *foo(...) but there
+    This is used when we find a predicate like is-foo(...) but there
     is no matching goal.  We run (in this callback) the associated
-    tactic code.  As long as it runs successfully, not returning 99 or
-    any error value, then we're OK - the tactic doesn't need rebuilding
+    predicate code.  As long as it runs successfully, not returning 99 or
+    any error value, then we're OK - the predicate doesn't need rebuilding
     so the dependency is satisfied.  However if it returns 99 (needs
     rebuild) or an error then we have to exit with an error. *)
