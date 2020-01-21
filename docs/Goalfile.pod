@@ -199,6 +199,24 @@ There are two common uses for this: either to add explicit predicates
 (such as C<is-file>) to a plain list of strings as in the example above;
 or to turn a list of strings into a list of goal or function calls.
 
+=head2 Standard Shell Functions
+
+=head3 quoted_string
+
+Quote a string which will be consumed as a goal expression.  This is
+typically used from within goal functions which return expressions
+(ie. ones which do I<not> have an explicit C<returning> declaration).
+You must not use this shell function with functions that are marked as
+C<returning string> or C<returning strings>.
+
+=head3 print_green
+
+Echo a string in green.  Useful for success/OK messages.
+
+=head3 print_red
+
+Echo a string in red.  Useful for error messages.
+
 =head1 SEE ALSO
 
 L<goals(1)>.
