@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-AC_INIT([goals], [0.2])
+AC_INIT([goals], [0.3])
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE(foreign) dnl Do not quote this parameter.
