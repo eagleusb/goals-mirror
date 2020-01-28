@@ -44,3 +44,11 @@ the moment.
 Some kind of “source” directive.  If goals sees this then
 it automatically sources the parameter (a shell script) into
 every shell command.
+
+Allow code sections to be written in other languages, eg OCaml,
+Python, etc.  The syntax might look like:
+  {#!OCAML
+    ocaml code
+  }
+Also provide better integration, so we can accurately pass predicate
+constructors into these other language sections.
