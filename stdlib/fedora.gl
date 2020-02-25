@@ -44,15 +44,11 @@
 # %fedora-blocked:
 # List of packages which are blocked.  Any dependent packages are
 # also blocked. XXX NOT IMPLEMENTED
-#
-# %koji:            Name of koji binary, usually "koji".
-# %fedpkg:          Name of fedpkg binary, usually "fedpkg".
 
 # Check if the source package has been built in Koji.
 
 predicate is-koji-built (pkg) = {
     cd %fedora-dir/%pkg/%fedora-branch
-    koji=%koji
     specfile=%pkg.spec
 
     # Packages which are ignored are treated as if they were rebuilt already.
@@ -67,7 +63,7 @@ predicate is-koji-built (pkg) = {
     # Else we must check Koji itself.
     # Koji sends some messages to stderr.
     nvr=$(fedpkg verrel)
-    buildinfo=$($koji buildinfo $nvr 2>&1 ||:)
+    buildinfo=$(koji buildinfo $nvr 2>&1 ||:)
 
     # No build at all, needs rebuild.
     echo "$buildinfo" | grep -sq "No such build" && exit 99
@@ -85,7 +81,7 @@ predicate is-koji-built (pkg) = {
         exit 1 ;;
     BUILDING)
         # Cancel the build, we will resubmit it.
-        $koji cancel $taskid ||:
+        koji cancel $taskid ||:
         exit 99 ;;
     CANCELED|DELETED)
         # Do a rebuild.
@@ -101,15 +97,13 @@ goal fedora-rebuild (pkg) =
 is-koji-built ("%pkg") :
         wrap ("is-koji-built", fedora-source-dependencies (pkg)) {
     cd %fedora-dir/%pkg/%fedora-branch
-    fedpkg=%fedpkg
-    koji=%koji
     specfile=%pkg.spec
 
     # We have to wait for the dependencies to become available
     # before we can start the new build.
     for p in %<; do
-        nvr=$($koji --quiet latest-build %fedora-tag $p | awk '{print $1}')
-        $koji wait-repo %fedora-tag --build=$nvr
+        nvr=$(koji --quiet latest-build %fedora-tag $p | awk '{print $1}')
+        koji wait-repo %fedora-tag --build=$nvr
     done
 
     # Make sure the local directory is up to date.
@@ -124,9 +118,9 @@ is-koji-built ("%pkg") :
     else
         rpmdev-bumpspec -c "- Bump release and rebuild." *.spec
     fi
-    $fedpkg commit -c
-    $fedpkg push
-    $fedpkg build --target %fedora-tag
+    fedpkg commit -c
+    fedpkg push
+    fedpkg build --target %fedora-tag
 }
 
 # Get the source package names for a particular package.
