@@ -98,8 +98,8 @@ predicate is-koji-built (pkg) = {
 # Rebuild a Fedora package.  This rebuilds any dependencies first.
 
 goal fedora-rebuild (pkg) =
-is-koji-built ("%pkg") : wrap ("is-koji-built",
-                               fedora-source-dependencies (pkg)) {
+is-koji-built ("%pkg") :
+        wrap ("is-koji-built", fedora-source-dependencies (pkg)) {
     cd %fedora-dir/%pkg/%fedora-branch
     fedpkg=%fedpkg
     koji=%koji
