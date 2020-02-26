@@ -52,3 +52,8 @@ Python, etc.  The syntax might look like:
   }
 Also provide better integration, so we can accurately pass predicate
 constructors into these other language sections.
+
+Limit parallelism within the Goalfile (like make's .NOPARALLEL),
+something like ‘let max_jobs = 8’
+
+Hash table structure.
