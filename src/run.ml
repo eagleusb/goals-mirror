@@ -122,9 +122,12 @@ and needs_rebuild ?(final_check = false) env loc deps extra_deps pattern =
      let r = Eval.run_code env loc code in
      if r = 99 (* means "needs rebuild" *) then true
      else if r = 0 (* means "doesn't need rebuild" *) then false
-     else
-       failwithf "%a: predicate ‘%s’ failed with exit code %d"
-         Ast.string_loc loc pred r
+     else (
+       let targs = List.map (Ast.string_expr ()) targs in
+       let targs = String.concat ", " targs in
+       failwithf "%a: predicate ‘%s (%s)’ failed with exit code %d"
+         Ast.string_loc loc pred targs r
+     )
 
 and exists_runner env loc p debug_pred =
   Cmdline.debug "%a: running implicit existence rule for predicate %s"
