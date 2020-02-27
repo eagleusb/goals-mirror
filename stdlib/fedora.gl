@@ -111,15 +111,24 @@ is-koji-built ("%pkg") :
     # would need to be corrected/integrated by hand.
     git pull
 
+    # If we're not building for Rawhide then we must use the rightmost
+    # (-r) flag so there's an upgrade path to Rawhide.
+    rightmost=
+    if test %fedora-branch != "master"; then rightmost=-r; fi
+
     # If the specfile doesn't have the magic string then add
     # that now.
     if ! grep -sq %fedora-rebuild-name $specfile; then
-        rpmdev-bumpspec -c "- "%fedora-rebuild-name *.spec
+        rpmdev-bumpspec -c "- "%fedora-rebuild-name $rightmost *.spec
     else
-        rpmdev-bumpspec -c "- Bump release and rebuild." *.spec
+        rpmdev-bumpspec -c "- Bump release and rebuild." $rightmost *.spec
     fi
+
+    # Commit and push the change.
     fedpkg commit -c
     fedpkg push
+
+    # Do the Koji build in the side tag.
     fedpkg build --target %fedora-tag
 }
 
